@@ -250,6 +250,16 @@ details.fold[open]>summary::after{content:'접기'}
 .score{font-family:var(--mono);font-weight:600;font-size:13.5px;letter-spacing:.08em}
 .off{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);border:1.5px dashed var(--line);
   padding:11px 14px;margin-top:18px;line-height:1.7}
+.lnkbtn{background:none;border:0;border-bottom:1px solid var(--ink-2);padding:0 0 1px;cursor:pointer;
+  font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.04em}
+.lnkbtn:hover{color:var(--pink-ink);border-bottom-color:var(--pink-ink)}
+.claim{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.claim button{font-family:var(--display);font-weight:700;font-size:13.5px;background:rgba(255,255,255,.4);
+  border:1.5px solid var(--ink);padding:9px 14px;cursor:pointer;color:var(--ink);
+  display:flex;align-items:baseline;gap:8px}
+.claim button:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+.claim button:hover .t{color:rgba(255,255,255,.8)}
+.claim button .t{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--ink-2)}
 .pick{border:1.5px solid var(--ink);border-top:0;background:rgba(255,255,255,.55);padding:14px 16px;min-height:96px}
 .pick .ph{font-family:var(--mono);font-weight:600;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-2);margin:0 0 10px}
 .pick .pk{display:flex;gap:14px;align-items:flex-start}
@@ -271,7 +281,8 @@ svg .wk:focus-visible rect,svg .mb:focus-visible circle{stroke:var(--blue);strok
 <div class="wrap">
   <div class="head">
     <span><b>애독자 카드</b> · 취향 유전자 지도 · 만화 / 웹툰</span>
-    <span class="mono">집계 인원 <span class="cnt num" id="hCnt">000</span> · 등록 작품 <span class="num" id="hWk">000</span></span>
+    <span class="mono">집계 인원 <span class="cnt num" id="hCnt">000</span> · 등록 작품 <span class="num" id="hWk">000</span>
+      &nbsp;·&nbsp; <span id="whoami"></span></span>
   </div>
   <header class="mast">
     <h1>취향 유전자<br>지도<span class="plate" aria-hidden="true">취향 유전자<br>지도</span></h1>
@@ -520,6 +531,9 @@ async function probeStore(){
   if(hasArt()){STORE='artifact';return;}
   STORE='local';
 }
+/* 사파리 시크릿 모드 등에서는 저장이 아예 막힙니다. 그러면 신원이 유지되지 않으니 알려줘야 합니다. */
+let LSOK=true;
+try{localStorage.setItem('dna6:probe','1');localStorage.removeItem('dna6:probe');}catch(e){LSOK=false;}
 const lsGet=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
 async function artGet(k){try{const r=await window.storage.get(k,true);return r?JSON.parse(r.value):null}catch(e){return null}}
@@ -540,7 +554,9 @@ async function loadAll(){
   }
   const id=myId();ME=id?MEMBERS.find(m=>m.id===id)||null:null;
 }
-async function saveMember(rec){
+/* claim=false 는 남의 카드를 쓸 때(시드 생성) 씁니다.
+   이전에는 항상 내 신원을 갱신해서, 시드를 채우면 마지막 시드가 「나」가 되어버렸습니다. */
+async function saveMember(rec,claim){
   let ok=false;
   try{
     if(STORE==='api'){await api({type:'member',rec});ok=true;}
@@ -548,7 +564,7 @@ async function saveMember(rec){
       if(at>=0)arr[at]=rec;else arr.push(rec);
       ok=STORE==='artifact'?await artSet('dna6:members',arr):lsSet('dna6:members',arr);}
   }catch(e){ok=false;}
-  if(ok){setMyId(rec.id);await loadAll();}
+  if(ok){if(claim!==false)setMyId(rec.id);await loadAll();}
   return ok;
 }
 /* 한 번 받아온 표지는 클럽 공용으로 쌓입니다. 멤버가 늘면 재조회가 거의 사라집니다. */
@@ -561,6 +577,15 @@ async function cacheCovers(map){
     else if(STORE==='artifact')await artSet('dna6:covers',COVERS);
     else lsSet('dna6:covers',COVERS);
   }catch(e){}
+}
+/* 서버 연결 전에 제출한 카드는 브라우저 안에만 남아 서버 목록에 없습니다.
+   그대로 두면 본인 눈에 카드가 사라진 것처럼 보이므로, 찾아내서 올릴지 물어봅니다. */
+function findOrphans(){
+  if(STORE!=='api')return [];
+  const loc=lsGet('dna6:members');
+  if(!Array.isArray(loc))return [];
+  return loc.filter(m=>m&&m.id&&Array.isArray(m.works)&&m.works.length===NEED
+    &&!MEMBERS.some(x=>x.id===m.id));
 }
 async function wipeAll(key){
   try{
@@ -751,11 +776,22 @@ function renderNav(){
   const open=!!ME||!!VIEW_ID;
   $('#nav').innerHTML=TABS.map(([k,l])=>`<button role="tab" data-t="${k}" aria-selected="${TAB===k}" ${k!=='submit'&&!open?'disabled title="카드를 먼저 제출하세요"':''}>${l}</button>`).join('');
   $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{TAB=b.dataset.t;JUST=false;render();});}
+function renderWho(){
+  const el=$('#whoami');if(!el)return;
+  if(ME)el.innerHTML=`<b style="color:var(--pink-ink)">${esc(ME.name)}</b> 님으로 접속 중 <button class="lnkbtn" id="whoSw">연결 끊기</button>`;
+  else el.innerHTML=`<span style="color:var(--ink-3)">이 브라우저에 카드 없음</span>`;
+  const b=$('#whoSw');
+  if(b)b.onclick=async()=>{
+    if(!confirm('이 브라우저와 내 카드의 연결만 끊습니다.\n카드는 지워지지 않고, 이름을 다시 골라 이어붙일 수 있습니다.'))return;
+    try{localStorage.removeItem(MEK);}catch(e){}
+    window.__me=null;ME=null;draft=null;TAB='submit';await loadAll();render();
+    toast('연결을 끊었습니다');};
+}
 function render(){
   recompute();
   $('#hCnt').textContent=String(MEMBERS.length).padStart(3,'0');
   $('#hWk').textContent=String(Object.keys(WORKS).length).padStart(3,'0');
-  renderNav();const v=$('#view');
+  renderWho();renderNav();const v=$('#view');
   if(TAB!=='submit'&&TAB!=='report'&&!ME){
     v.innerHTML=`<section class="sect"><p class="kicker">잠김</p><h2>내 카드가 필요합니다</h2>
       <p class="note">이 화면은 내 카드와 비교해서 보여주는 곳입니다. 먼저 카드를 제출해주세요.</p>
@@ -786,8 +822,17 @@ function viewSubmit(v){
   const msel=()=>draft.tags.filter(t=>MOODS.includes(t));
   const aL=byTitle[norm(ANCHOR_L)],aR=byTitle[norm(ANCHOR_R)];
   v.innerHTML=`
+  ${!ME&&MEMBERS.length?`<section class="sect" style="border:1.5px solid var(--blue);padding:20px;background:rgba(27,79,216,.06)">
+    <p class="kicker" style="color:var(--blue-ink)">이미 낸 적이 있다면</p><h2>내 카드 찾기</h2>
+    <p class="note">카드는 서버에 그대로 있는데 이 브라우저가 내 것인 줄 모르는 상태일 수 있습니다.
+      기기를 바꿨거나 브라우저 기록을 지웠을 때 그렇습니다. 아래에서 내 이름을 누르면 이어서 고칠 수 있습니다.</p>
+    <div class="tags" style="margin-top:14px">${MEMBERS.slice().sort((a,b)=>b.ts-a.ts)
+      .map(m=>`<button class="tag" data-claim="${esc(m.id)}">${esc(m.name)}</button>`).join('')}</div>
+    <p class="how" style="margin-top:14px">누른 뒤 <b>이름을 그대로 한 번 더 입력</b>해야 넘어갑니다. 남의 카드를 실수로 가져가는 일을 막기 위한 확인입니다.</p>
+  </section>`:''}
   <section class="sect"><p class="kicker">${ME?'제출한 카드 고치기':'첫 제출'}</p><h2>애독자 카드</h2>
-    <p class="note">제출하면 클럽 전원이 이 카드와 리포트를 볼 수 있습니다. 이름은 실명이 아니어도 됩니다.</p></section>
+    <p class="note">제출하면 클럽 전원이 이 카드와 리포트를 볼 수 있습니다. 이름은 실명이 아니어도 됩니다.
+      ${ME?'':'<b>같은 이름으로 이미 카드가 있으면 새로 만들지 않고 그 카드를 이어받습니다.</b>'}</p></section>
 
   <section class="sect">
     <div class="step"><span class="n">1</span><div><h3>취향 축</h3>
@@ -1030,19 +1075,35 @@ function viewSubmit(v){
 
   const skq=$('#skq');
   if(skq)skq.onclick=()=>{const h=$('#skhelp');h.style.display=h.style.display==='none'?'':'none';};
+  v.querySelectorAll('[data-claim]').forEach(b=>b.onclick=async()=>{
+    const m=MEMBERS.find(x=>x.id===b.dataset.claim);if(!m)return;
+    const t=prompt(`「${m.name}」 카드를 이어받습니다.\n\n확인을 위해 이름을 그대로 입력해주세요.`);
+    if(t===null)return;
+    if(t.trim()!==m.name){toast('이름이 다릅니다');return;}
+    setMyId(m.id);draft=null;JUST=false;await loadAll();TAB='report';render();
+    toast(`${m.name} 님의 카드를 되찾았습니다`);});
   $('#sub').onclick=async()=>{
     draft.name=$('#nm').value.trim();draft.decl=$('#dc').value.trim();draft.slack=$('#sk').value.trim();
     if(gsel().length<1)return toast('장르 축을 하나 이상 골라주세요');
     if(msel().length<1)return toast('성향 축을 하나 이상 골라주세요');
     if(draft.works.length<NEED)return toast(`인생작 ${NEED}편을 채워주세요 (현재 ${draft.works.length}편)`);
     if(!draft.name)return toast('이름을 적어주세요');
+    /* 신원 연결이 끊긴 사람이 같은 이름으로 다시 내면 카드가 두 개 생기고
+       집계가 이중으로 잡힙니다. 새로 만들지 않고 기존 카드를 이어받게 합니다. */
+    let adopt=null;
+    if(!ME){
+      const dup=MEMBERS.find(m=>m.name===draft.name);
+      if(dup){
+        if(!confirm(`「${draft.name}」 이름으로 이미 카드가 있습니다.\n\n[확인] 그 카드를 이어받아 이번 내용으로 수정합니다.\n[취소] 다른 이름으로 내겠습니다.`))return;
+        adopt=dup;}}
     $('#sub').disabled=true;$('#ss').textContent='제출 중…';
     const prev=ME?Object.fromEntries(ME.works.map(w=>[w.aid,w.blurb||''])):{};
-    const rec={id:ME?ME.id:Math.random().toString(36).slice(2,10),name:draft.name,decl:draft.decl,slack:draft.slack,
+    const rec={id:ME?ME.id:(adopt?adopt.id:Math.random().toString(36).slice(2,10)),name:draft.name,decl:draft.decl,slack:draft.slack,
       tags:[...draft.tags],works:draft.works.map(w=>({aid:w.aid,title:w.title,ko:w.ko||'',cover:w.cover||'',
         country:w.country||'',pop:w.pop||5,mood:w.mood||3,seedMood:w.seedMood||w.mood||3,g:w.g||'',
         note:w.note||'',blurb:w.blurb||prev[w.aid]||'',auto:!!w.auto,selfPop:!!w.selfPop})),
-      insight:ME?ME.insight||'':'',rival:ME?!!ME.rival:false,blind:ME?ME.blind||null:null,ts:ME?ME.ts:Date.now()};
+      insight:(ME||adopt||{}).insight||'',rival:!!(ME||adopt||{}).rival,blind:(ME||adopt||{}).blind||null,
+      ts:(ME||adopt||{}).ts||Date.now()};
     const ok=await saveMember(rec);
     $('#sub').disabled=false;$('#ss').textContent='';
     if(!ok)return toast('저장이 실패했습니다');
@@ -1104,9 +1165,8 @@ function viewSubmit(v){
         return {aid:w.aid,title:w.title,ko:'',cover:COVERS[w.aid]||'',country:w.country,pop:w.pop,
           mood,seedMood:w.mood,g:w.g,note:'',blurb:'',auto:false,selfPop:false};});
       await saveMember({id:Math.random().toString(36).slice(2,10),name,decl,slack:'',tags,works:ws,
-        insight:'',rival:Math.random()<.5,blind:null,ts:Date.now()-Math.round(Math.random()*8e7)});}
-    try{localStorage.removeItem(MEK);}catch(e){}window.__me=null;
-    ME=null;await loadAll();$('#ss').textContent='';$('#seed').disabled=false;render();toast('시드가 들어갔습니다');};
+        insight:'',rival:Math.random()<.5,blind:null,ts:Date.now()-Math.round(Math.random()*8e7)},false);}
+    await loadAll();$('#ss').textContent='';$('#seed').disabled=false;render();toast('시드가 들어갔습니다');};
   $('#wipe').onclick=async()=>{
     let key='';
     if(STORE==='api'){key=prompt('전체를 지웁니다. 운영자 키를 입력하세요.\n(Vercel 환경변수 ADMIN_KEY 값)')||'';if(!key)return;}
@@ -1341,6 +1401,7 @@ async function exportCard(me){
     :r.miss?`저장했습니다 · 표지 ${r.miss}칸은 제목으로 들어갔습니다`:'PNG를 저장했습니다');
 }
 const cardLink=id=>location.origin+location.pathname+'?card='+encodeURIComponent(id);
+const meLink=id=>location.origin+location.pathname+'?me='+encodeURIComponent(id);
 const txtCardShare=me=>txtCard(me)+'\n'+cardLink(me.id);
 function txtRoster(){
   const subs=MEMBERS.slice().sort((a,b)=>a.ts-b.ts);
@@ -1364,8 +1425,14 @@ function viewReport(v){
     <p class="kicker">제출 완료</p><h2>슬랙에 이걸 붙이세요</h2>
     <p class="note">이 페이지의 목적은 답을 주는 게 아니라 대화를 여는 것입니다. 아래 문장과 링크를 클럽 채널에 붙이면 됩니다.
       링크를 누른 사람은 제 카드를 바로 볼 수 있습니다.</p>
-    <div style="margin-top:18px">${proof('내 카드 소개 + 링크',txtCardShare(me))}</div>
-    <p class="how" style="margin-top:0">더 많은 대화거리는 위쪽 <b>대화거리</b> 탭에 있습니다 — 변론 요청, 나만 가진 조합, 반대편 매칭.</p>
+    <div style="margin-top:18px">${proof('클럽 채널에 붙일 문장 + 공개 링크',txtCardShare(me))}</div>
+    <div class="proof" style="border-color:var(--blue)">
+      <div class="ph"><span style="color:var(--blue-ink)">내 전용 링크 · 나에게만 DM</span>
+        <button class="cp" data-cp="mlink0">링크 복사</button></div>
+      <pre id="mlink0">${esc(meLink(me.id))}</pre></div>
+    <p class="how" style="margin-top:0">전용 링크는 <b>기기를 바꿨을 때 내 카드를 되찾는 열쇠</b>입니다. 슬랙에서 나에게 DM으로 보내두세요.
+      이걸 잃어버려도 「카드 제출」 화면에서 이름으로 되찾을 수 있습니다.<br>
+      더 많은 대화거리는 <b>대화거리</b> 탭에 있습니다 — 변론 요청, 나만 가진 조합, 반대편 매칭.</p>
   </section>`:''}
   <section class="sect">
     <div class="dna"><div class="top"><span>애독자 카드 No. ${esc(me.id.slice(0,6).toUpperCase())}</span>
@@ -1382,8 +1449,11 @@ function viewReport(v){
     <div class="bdgs">${badges(me).map(b=>`<div class="bdg${b.hot?' hot':''}"><div class="t">${esc(b.t)}</div><div class="d">${esc(b.d)}</div></div>`).join('')}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center">
       <button class="btn" id="png">카드 이미지 저장 · PNG</button>
-      <button class="btn ghost" id="lnk">이 카드 링크 복사</button>
+      <button class="btn ghost" id="lnk">공개 링크 복사</button>
+      ${guest?'':'<button class="btn ghost" id="mlnk">내 전용 링크 복사</button>'}
       <span class="spin" id="ps"></span></div>
+    ${guest?'':`<p class="how" style="margin-top:14px"><b>공개 링크</b>는 누가 눌러도 내 카드를 볼 수만 있습니다. 슬랙에 뿌리는 건 이쪽입니다.
+      <b>전용 링크</b>는 내 카드를 고칠 수 있는 링크입니다. 기기를 바꿀 때 쓰려고 <b>슬랙에서 나에게 DM</b>으로 보내두세요. 채널에는 올리지 마세요.</p>`}
     ${guest?`<p class="how" style="margin-top:16px">${esc(me.name)} 님의 카드를 보고 있습니다.
       <a href="${esc(location.pathname)}" style="color:var(--blue-ink)">내 카드로 돌아가기</a></p>`:''}
   </section>
@@ -1412,6 +1482,7 @@ function viewReport(v){
     try{await exportCard(me);}catch(e){toast('이미지 저장이 실패했습니다: '+((e&&e.message)||e));}
     $('#ps').textContent='';$('#png').disabled=false;};
   $('#lnk').onclick=b=>copyText(cardLink(me.id),b.currentTarget);
+  const ml=$('#mlnk');if(ml)ml.onclick=b=>copyText(meLink(me.id),b.currentTarget);
 }
 
 /* ── 클럽 지도 ── */
@@ -1573,6 +1644,11 @@ if(typeof window!=='undefined')window.addEventListener('resize',()=>{
 (async function(){
   $('#view').innerHTML='<p class="spin">클럽 기록을 불러오는 중…</p>';
   try{await loadAll();}catch(e){}
+  /* ?me=<id> 는 전용 링크입니다. 기기를 바꿔도 이 링크로 들어오면 내 카드를 되찾습니다.
+     주소에 남아 있으면 실수로 공유될 수 있으니 확인 후 지웁니다. */
+  try{const qm=new URLSearchParams(location.search).get('me');
+    if(qm&&MEMBERS.some(m=>m.id===qm)){setMyId(qm);ME=MEMBERS.find(m=>m.id===qm)||null;TAB='report';
+      try{history.replaceState(null,'',location.pathname);}catch(e){}}}catch(e){}
   /* ?card=<id> 로 들어오면 그 사람의 카드를 보여줍니다. 슬랙에 링크를 뿌릴 때 쓰입니다. */
   try{const q=new URLSearchParams(location.search).get('card');
     if(q&&MEMBERS.some(m=>m.id===q)){VIEW_ID=q;TAB='report';}}catch(e){}
