@@ -11,19 +11,20 @@
   --pink:#FF3E96;--pink-fill:#E0257F;--pink-ink:#A3004F;--blue:#1B4FD8;--blue-ink:#12369A;
   --display:'Gothic A1',sans-serif;--body:'Noto Serif KR',serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
 *{box-sizing:border-box}html,body{margin:0}
-body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.75;-webkit-font-smoothing:antialiased}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9;
   background-image:radial-gradient(var(--ink) .5px,transparent .6px);background-size:4px 4px;opacity:.08;mix-blend-mode:multiply}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px 96px;position:relative;z-index:1}
 .head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-family:var(--mono);font-size:11px;
   letter-spacing:.13em;text-transform:uppercase;padding:14px 0 12px;border-bottom:1.5px solid var(--ink);flex-wrap:wrap;color:var(--ink-2)}
 .head b{font-weight:600;color:var(--ink)}.head .cnt{color:var(--pink-ink);font-weight:600}
-.mast{padding:42px 0 28px;border-bottom:5px double var(--ink)}
-.mast h1{font-family:var(--display);font-weight:900;font-size:clamp(50px,13vw,128px);line-height:.84;
-  letter-spacing:-.045em;margin:0;position:relative;display:inline-block}
-.mast h1 .plate{position:absolute;inset:0;color:var(--pink);mix-blend-mode:multiply;z-index:-1;
-  transform:translate(6px,5px);animation:reg 1s cubic-bezier(.16,1,.3,1) both}
-@keyframes reg{from{transform:translate(26px,20px)}to{transform:translate(6px,5px)}}
+/* 판걸림 오프셋이 크고 애니메이션이 걸려 있어 글자가 겹쳐 읽히지 않았습니다.
+   3px 고정 · 애니메이션 제거 · 3줄 → 2줄 · 크기 축소로 잡았습니다. */
+.mast{padding:38px 0 26px;border-bottom:5px double var(--ink)}
+.mast h1{font-family:var(--display);font-weight:900;font-size:clamp(34px,6.4vw,74px);line-height:1.0;
+  letter-spacing:-.035em;margin:0;position:relative;display:inline-block}
+.mast h1 .plate{position:absolute;inset:0;color:var(--pink);z-index:-1;transform:translate(3px,3px)}
 .mast .sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);margin:20px 0 0}
 .mast .lede{max-width:48ch;margin:12px 0 0;font-size:16px}
 nav{display:flex;border-bottom:1.5px solid var(--ink);margin-bottom:34px;flex-wrap:wrap}
@@ -109,16 +110,20 @@ input[type=text]:focus,textarea:focus,select:focus{outline:0;border-color:var(--
 .tag:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 
 .axis{margin-top:16px;border:1.5px solid var(--ink);background:rgba(255,255,255,.42)}
-.axis .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;
-  border-bottom:1.5px solid var(--ink);font-family:var(--display);font-weight:900;font-size:14.5px;flex-wrap:wrap}
-.axis .bar span.m{font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:.1em;color:var(--ink-2)}
+/* flex + wrap 이라 좁은 폭에서 「충격」이 아래로 떨어져 축이 깨졌습니다. 그리드로 고정합니다. */
+.axis .bar{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:11px 14px;
+  border-bottom:1.5px solid var(--ink);font-family:var(--display);font-weight:900;font-size:14.5px}
+.axis .bar span.m{font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:.08em;color:var(--ink-2);text-align:center}
+@media(max-width:640px){.axis .bar span.m{display:none}.axis .bar{grid-template-columns:auto 1fr}}
 .zones{display:grid;grid-template-columns:repeat(5,1fr)}
 .z{border-right:1px solid var(--line-2);padding:10px 8px 14px;min-height:200px;position:relative}
 .z:last-child{border-right:0}
 .z.hot{background:rgba(224,37,127,.11);box-shadow:inset 0 0 0 2px var(--pink-fill)}
+/* min-height 였어서 1줄 라벨과 2줄 라벨의 시작 높이가 달랐습니다. 고정 높이로 정렬합니다. */
 .z .zl{font-family:var(--mono);font-weight:600;font-size:10px;letter-spacing:.06em;color:var(--ink-2);
-  text-align:center;margin-bottom:9px;line-height:1.45;min-height:30px}
-.z .cnt{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+  text-align:center;margin-bottom:10px;line-height:1.4;height:30px;
+  display:flex;align-items:center;justify-content:center}
+.z .cnt{position:absolute;bottom:5px;right:7px;font-family:var(--mono);font-weight:600;font-size:10px;color:var(--ink-3)}
 .z .zn{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .tile{width:46px;flex:none;background:none;border:0;padding:0;cursor:grab;position:relative;touch-action:none}
 .tile .b{border:1.5px solid var(--ink);pointer-events:none}
@@ -269,7 +274,7 @@ svg .wk:focus-visible rect,svg .mb:focus-visible circle{stroke:var(--blue);strok
     <span class="mono">집계 인원 <span class="cnt num" id="hCnt">000</span> · 등록 작품 <span class="num" id="hWk">000</span></span>
   </div>
   <header class="mast">
-    <h1>취향<br>유전자<br>지도<span class="plate" aria-hidden="true">취향<br>유전자<br>지도</span></h1>
+    <h1>취향 유전자<br>지도<span class="plate" aria-hidden="true">취향 유전자<br>지도</span></h1>
     <p class="sub">Taste DNA Map — 만화 · 웹툰 한정 · 1인 10작품</p>
     <p class="lede">인생작 열 편을 올리면 표지가 좌표 위에 놓입니다. 세로는 얼마나 알려진 작품인가, 가로는 읽고 난 뒤 마음이 어땠나. 수면 아래에 잠긴 표지가 이 클럽의 훈장입니다.</p>
   </header>
@@ -715,6 +720,8 @@ async function copyText(t,btn){
   if(ok){const o=btn.textContent;btn.textContent='복사됨';setTimeout(()=>btn.textContent=o,1600);}
   else copyBox(t);
 }
+/* copyText 의 마지막 단계가 .proof 를 찾도록 되어 있어 교정지 밖 버튼에서는 오류가 났습니다.
+   copyBox 로 통일해 어디서 눌러도 동작합니다. */
 /* 클립보드 API 와 execCommand 가 모두 막히는 환경(모바일 웹뷰 등)의 마지막 수단.
    편집 가능한 textarea 라야 모바일에서 복사 도구가 뜹니다. */
 function copyBox(t){
@@ -737,17 +744,24 @@ const bindCopy=r=>r.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>copyT
 const SLACK_HINT=`슬랙에 붙여넣으면 별표는 굵은 글씨로 바뀝니다. 다만 <b>@이름은 멘션이 걸리지 않습니다</b> — 슬랙 멘션은 멤버 ID로 동작해서, 붙여넣은 뒤 이름 앞에서 @를 한 번 다시 입력해야 실제 호출이 됩니다.`;
 
 /* ══ 화면 ══ */
-let TAB='submit',draft=null,MAPMEM=true,MAPMODE='axis';
+let TAB='submit',draft=null,MAPMEM=true,MAPMODE='axis',VIEW_ID=null,JUST=false;
 const TABS=[['submit','카드 제출'],['report','내 리포트'],['club','클럽 지도'],['twin','취향 쌍둥이'],['talk','대화거리'],['blind','블라인드']];
 function newDraft(){return {works:[],tags:[],name:'',decl:'',slack:''};}
 function renderNav(){
-  $('#nav').innerHTML=TABS.map(([k,l])=>`<button role="tab" data-t="${k}" aria-selected="${TAB===k}" ${k!=='submit'&&!ME?'disabled title="카드를 먼저 제출하세요"':''}>${l}</button>`).join('');
-  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{TAB=b.dataset.t;render();});}
+  const open=!!ME||!!VIEW_ID;
+  $('#nav').innerHTML=TABS.map(([k,l])=>`<button role="tab" data-t="${k}" aria-selected="${TAB===k}" ${k!=='submit'&&!open?'disabled title="카드를 먼저 제출하세요"':''}>${l}</button>`).join('');
+  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{TAB=b.dataset.t;JUST=false;render();});}
 function render(){
   recompute();
   $('#hCnt').textContent=String(MEMBERS.length).padStart(3,'0');
   $('#hWk').textContent=String(Object.keys(WORKS).length).padStart(3,'0');
   renderNav();const v=$('#view');
+  if(TAB!=='submit'&&TAB!=='report'&&!ME){
+    v.innerHTML=`<section class="sect"><p class="kicker">잠김</p><h2>내 카드가 필요합니다</h2>
+      <p class="note">이 화면은 내 카드와 비교해서 보여주는 곳입니다. 먼저 카드를 제출해주세요.</p>
+      <div class="empty" style="margin-top:20px"><button class="btn" id="goSub">카드 제출하러 가기</button></div></section>`;
+    const g=$('#goSub');if(g)g.onclick=()=>{TAB='submit';render();};
+    return;}
   ({submit:viewSubmit,report:viewReport,club:viewClub,twin:viewTwin,talk:viewTalk,blind:viewBlind}[TAB])(v);
   bindCopy(v);}
 
@@ -760,8 +774,14 @@ async function shrink(file){
   x.fillStyle='#C6C6B8';x.fillRect(0,0,W,H);x.drawImage(img,(W-w)/2,(H-h)/2,w,h);
   return c.toDataURL('image/jpeg',0.72);}
 let dragS=null;
+const ago=ts=>{const d=Date.now()-(ts||0),m=Math.round(d/6e4);
+  if(m<1)return '방금';if(m<60)return m+'분 전';
+  const h=Math.round(m/60);if(h<24)return h+'시간 전';return Math.round(h/24)+'일 전';};
 function viewSubmit(v){
   if(!draft) draft=ME?{works:ME.works.map(w=>({...w})),tags:[...ME.tags],name:ME.name,decl:ME.decl,slack:ME.slack||''}:newDraft();
+  const movedN=MEMBERS.filter(m=>m.works.some(w=>w.mood!==w.seedMood)).length;
+  const autoCells=MEMBERS.reduce((s,m)=>s+m.works.filter(w=>w.auto).length,0);
+  const autoPct=MEMBERS.length?Math.round(autoCells/(MEMBERS.length*NEED)*100):0;
   const gsel=()=>draft.tags.filter(t=>GENRES.includes(t));
   const msel=()=>draft.tags.filter(t=>MOODS.includes(t));
   const aL=byTitle[norm(ANCHOR_L)],aR=byTitle[norm(ANCHOR_R)];
@@ -805,8 +825,12 @@ function viewSubmit(v){
       <button class="btn ghost" id="auto">편집부에 일임합니다</button>
       <span class="spin" id="as">취향 축을 먼저 고르면 그 축으로 열 편을 뽑습니다</span></div>
     <hr class="rule">
-    <label class="fl">내 칸 <span class="num" id="cw">${draft.works.length}</span> / ${NEED}</label>
-    <div class="shelf" id="shelf"></div></section>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline;justify-content:space-between">
+      <label class="fl" style="margin:0">내 칸 <span class="num" id="cw">${draft.works.length}</span> / ${NEED}</label>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn ghost sm" id="covers">표지 다시 불러오기</button>
+        <span class="spin" id="cvmsg"></span></div></div>
+    <div class="shelf" id="shelf" style="margin-top:12px"></div></section>
 
   <section class="sect">
     <div class="step"><span class="n">3</span><div><h3>읽고 난 뒤 마음이 어땠나</h3>
@@ -829,17 +853,39 @@ function viewSubmit(v){
       <div class="d">슬랙 아이디를 적어두면 복사 문장에 그 아이디로 들어갑니다.</div></div></div>
     <div class="cols" style="gap:18px">
       <div><label class="fl">이름 또는 닉네임</label><input type="text" id="nm" maxlength="20" value="${esc(draft.name)}" placeholder="예) 현우"></div>
-      <div><label class="fl">슬랙 아이디 (선택)</label><input type="text" id="sk" maxlength="30" value="${esc(draft.slack)}" placeholder="예) hyunwoo"></div></div>
+      <div><label class="fl" style="display:flex;align-items:center;gap:7px">슬랙 아이디 (선택)
+        <button id="skq" aria-label="슬랙 아이디 찾는 법" title="슬랙 아이디 찾는 법"
+          style="width:19px;height:19px;border-radius:50%;border:1.5px solid var(--ink);background:none;
+          cursor:pointer;font-family:var(--mono);font-weight:600;font-size:11px;line-height:1;padding:0;color:var(--ink)">?</button></label>
+        <input type="text" id="sk" maxlength="30" value="${esc(draft.slack)}" placeholder="예) hyunwoo">
+        <div id="skhelp" style="display:none" class="how">슬랙 앱에서 <b>내 프로필 사진 클릭 → View profile</b> 을 열면 오른쪽에 프로필이 나옵니다.
+그 아래 <b>⋯ (더보기) → Copy member ID</b> 로 아이디를 복사할 수 있습니다.
+다만 여기에는 <b>평소 쓰는 표시 이름</b>(예: hyunwoo)을 적는 게 낫습니다.
+멤버 ID를 붙여넣어도 슬랙에서 멘션이 걸리지 않고, 표시 이름이면 붙여넣은 뒤 @만 다시 쳐서 자동완성으로 부를 수 있습니다.</div></div></div>
     <div style="margin-top:18px"><label class="fl">취향 선언문</label>
       <input type="text" id="dc" maxlength="60" value="${esc(draft.decl)}" placeholder="예) 결말이 아픈 것만 삽니다"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:26px;align-items:center">
       <button class="btn" id="sub">${ME?'카드 수정':'카드 제출'}</button><span class="spin" id="ss"></span></div></section>
   <hr class="rule">
-  <section class="sect"><p class="kicker">운영</p>
+  <section class="sect"><p class="kicker">운영</p><h2>제출 현황</h2>
+    <p class="note">오픈 후 확인할 숫자입니다. 마음 배치는 선택 사항이라, 옮긴 사람이 적으면 지도의 가로축이 편집부 초기값에 머물러 있다는 뜻입니다.</p>
+    <div class="stats" style="border:1.5px solid var(--ink);margin-top:16px">
+      <div><div class="v">${MEMBERS.length}</div><div class="k">제출 인원</div></div>
+      <div><div class="v">${movedN}</div><div class="k">마음을 옮긴 사람</div></div>
+      <div><div class="v">${MEMBERS.length?Math.round(movedN/MEMBERS.length*100):0}%</div><div class="k">마음 배치 참여율</div></div>
+      <div><div class="v">${autoPct}%</div><div class="k">편집부 추천 칸</div></div></div>
+    ${MEMBERS.length?`<div class="rank" style="margin-top:20px">${MEMBERS.slice().sort((a,b)=>b.ts-a.ts).map((m,i)=>{
+      const mv=m.works.filter(w=>w.mood!==w.seedMood).length;
+      return `<div class="row"><span class="r num" style="font-size:18px">${MEMBERS.length-i}</span>
+        <div><div class="nm" style="font-size:16px">${esc(m.name)}${ME&&m.id===ME.id?' <span class="mono" style="font-size:11px;color:var(--pink-ink)">— 나</span>':''}</div>
+        <div class="ev">${ago(m.ts)} · 마음 ${mv}편 옮김 · 편집부 추천 ${m.works.filter(w=>w.auto).length}편</div></div>
+        <span class="pc" style="font-size:13px">${esc((m.slack||'').replace(/^@/,'')||'—')}</span></div>`;}).join('')}</div>
+      <div style="margin-top:20px">${proof('제출 현황 · 슬랙 독촉용',txtRoster())}</div>`
+      :'<div class="empty" style="margin-top:18px"><p>아직 제출한 사람이 없습니다.</p></div>'}
+    <hr class="rule">
     <p class="note" style="margin-bottom:12px">10명 미만이면 결과가 썰렁해서 첫인상을 망칩니다. 오픈 전에 시드를 채워두세요.</p>
     <div style="display:flex;gap:9px;flex-wrap:wrap">
       <button class="btn ghost sm" id="seed">시드 6명 채우기</button>
-      <button class="btn ghost sm" id="covers">표지 불러오기</button>
       <button class="btn ghost sm" id="wipe">전체 비우기</button></div>
     <p class="off" id="offmsg">표지는 없어도 페이지가 그대로 동작합니다. 사전에 ${D.length}편이 내장돼 있고, 표지만 AniList에서 받아옵니다.</p>
     <p class="off" id="stmsg"></p></section>`;
@@ -918,7 +964,11 @@ function viewSubmit(v){
     $('#sres').innerHTML=`<div class="res">${list.map((m,i)=>`<button class="card" data-add="${i}">
       ${cover(m)}<div class="t">${esc(disp(m))}</div>
       <div class="m">${m.country==='KR'?'한국 · ':''}${m.pop?'인기 '+m.pop+'급':'사전 밖'}</div></button>`).join('')}</div>`;
-    $('#sres').querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addWork(list[+b.dataset.add]));};
+    $('#sres').querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
+      const before=draft.works.length;
+      addWork(list[+b.dataset.add]);
+      /* 넣는 데 성공했을 때만 검색창을 비웁니다. 칸이 찼거나 중복이면 결과를 남겨둡니다. */
+      if(draft.works.length>before){$('#q').value='';$('#sres').innerHTML='';$('#q').focus();}});};
   const run=async()=>{const q=$('#q').value.trim();if(!q)return;
     let list=dictSearch(q);
     if(list.length<4&&NETOK!==false){
@@ -978,6 +1028,8 @@ function viewSubmit(v){
       :`${pick.length}편을 넣었습니다 · 마음에 안 드는 건 빼고 다시 눌러도 됩니다`;
     $('#auto').textContent='편집부에 다시 일임합니다';};
 
+  const skq=$('#skq');
+  if(skq)skq.onclick=()=>{const h=$('#skhelp');h.style.display=h.style.display==='none'?'':'none';};
   $('#sub').onclick=async()=>{
     draft.name=$('#nm').value.trim();draft.decl=$('#dc').value.trim();draft.slack=$('#sk').value.trim();
     if(gsel().length<1)return toast('장르 축을 하나 이상 골라주세요');
@@ -994,22 +1046,26 @@ function viewSubmit(v){
     const ok=await saveMember(rec);
     $('#sub').disabled=false;$('#ss').textContent='';
     if(!ok)return toast('저장이 실패했습니다');
-    draft=null;TAB='report';render();toast('카드가 올라갔습니다');};
+    draft=null;JUST=true;TAB='report';render();toast('카드가 올라갔습니다');};
 
   /* 이전 필터는 w.q 를 봤는데 멤버 작품 레코드에는 q 필드가 저장되지 않아 항상 통과했습니다.
      그래서 검색어가 없는 작품을 한국어 제목으로 조회하고, 퍼지 매칭으로 나온 엉뚱한 표지를
      그대로 붙일 수 있었습니다. 사전을 직접 보고 판단하도록 바꿉니다. */
   $('#covers').onclick=async()=>{
     const cand=[],seen=new Set();let skip=0;
-    Object.values(WORKS).concat(draft?draft.works:[]).forEach(w=>{
+    /* 기준작(요츠바랑·베르세르크)은 아무도 등록하지 않으면 WORKS 에 없어서
+       표지를 한 번도 받아오지 못했습니다. 목록에 강제로 넣습니다. */
+    const anchors=[byTitle[norm(ANCHOR_L)],byTitle[norm(ANCHOR_R)]].filter(Boolean);
+    anchors.concat(Object.values(WORKS)).concat(draft?draft.works:[]).forEach(w=>{
       if(seen.has(w.aid))return;seen.add(w.aid);
       if(w.cover||COVERS[w.aid])return;
       if(w.aid.startsWith('c:')){skip++;return;}                 // 직접 올린 작품은 조회하지 않습니다
       const d=DIX[w.aid];
       if(d){if(!d.q){skip++;return;}cand.push({aid:w.aid,q:d.q});}  // 사전에 검색어가 없으면 건너뜁니다
       else if(w.title)cand.push({aid:w.aid,q:w.title});});
+    const msg=$('#cvmsg')||$('#offmsg');
     if(!cand.length)return toast(skip?`조회할 표지가 없습니다 · 검색어 없는 작품 ${skip}편은 직접 올려주세요`:'불러올 표지가 없습니다');
-    $('#offmsg').textContent=`표지 ${cand.length}건 조회 중…`;
+    msg.textContent=`표지 ${cand.length}건 조회 중…`;
     const map={};let fail=0,rej=0;
     for(let i=0;i<cand.length;i+=10){
       const part=cand.slice(i,i+10);
@@ -1020,11 +1076,12 @@ function viewSubmit(v){
       }catch(e){fail++;NETOK=false;}
       await new Promise(r=>setTimeout(r,300));}
     await cacheCovers(map);
-    $('#offmsg').textContent=`표지 ${Object.keys(map).length}건을 받았습니다`
+    const note=`표지 ${Object.keys(map).length}건을 받았습니다`
       +(rej?` · 제목이 어긋나 버린 결과 ${rej}건`:'')
       +(skip?` · 검색어 없어 건너뜀 ${skip}편`:'')
       +(fail?` · 실패한 묶음 ${fail}개`:'');
-    render();};
+    render();
+    const m2=$('#cvmsg');if(m2)m2.textContent=note;else toast(note);};
 
   $('#seed').onclick=async()=>{
     $('#seed').disabled=true;$('#ss').textContent='시드 만드는 중…';
@@ -1061,22 +1118,73 @@ function viewSubmit(v){
 
 /* ══ 아이스버그 배치도 ══ */
 function drawMap(host,opt){
-  const {aids,members,mine}=opt;
-  const W=940,H=680,PAD=76,TW=42,TH=63;
+  const {aids:allAids,members:allMem,mine}=opt;
+  /* 좁은 화면에서는 940 폭 viewBox 가 축소되면서 표지가 15px 로 찍혀 읽을 수 없었습니다.
+     viewBox 를 좁히고 표지와 글자를 키우고 작품 수를 줄입니다.
+     사분면 숫자는 표시된 것이 아니라 전체 작품으로 세서 사실이 바뀌지 않게 합니다. */
+  const MOB=(typeof window!=='undefined'&&window.innerWidth?window.innerWidth:1024)<640;
+  const CAP=MOB?22:60;
+  let aids=allAids;
+  if(allAids.length>CAP){
+    const a1=allAids.filter(a=>mine.has(a));
+    const a2=allAids.filter(a=>!mine.has(a)).sort((x,y)=>((IDF[y]||{n:0}).n)-((IDF[x]||{n:0}).n));
+    aids=a1.concat(a2).slice(0,CAP);}
+  let members=allMem||[];
+  const myId0=ME?ME.id:null;
+  if(MOB&&members.length>10)
+    members=members.filter(m=>m.id===myId0).concat(members.filter(m=>m.id!==myId0).slice(0,9));
+  const W=MOB?540:940,H=MOB?750:700,PAD=MOB?60:92,TW=MOB?58:42,TH=MOB?87:63;
+  const FS=MOB?19:13,FS2=MOB?16:11,SW=MOB?5:4;
   const sx=v=>PAD+TW/2+(v+1)/2*(W-PAD*2-TW);
   const sy=v=>H-PAD-TH/2-(v+1)/2*(H-PAD*2-TH);
-  const nodes=aids.map(a=>{const ax=sx(xOf(a)),ay=sy(yOf(a));
-    return {a,ax,ay,x:ax+(Math.random()-.5)*12,y:ay+(Math.random()-.5)*12};});
-  for(let it=0;it<120;it++){
+  /* 멤버가 적으면 여러 작품의 목표 좌표가 완전히 같아집니다(예: 열 편을 모두 「마음이 부서짐」
+     으로 표시한 1인 클럽). 이때 모두를 같은 한 점으로 당기면 밀어내도 다시 모여서 세로줄로
+     쌓입니다. 그래서 좌표가 겹치는 무리는 그 좌표를 중심으로 격자 자리를 미리 나눠주고,
+     각자 자기 자리로 당기게 합니다. 무리의 중심은 여전히 진짜 좌표입니다. */
+  const CW=TW+6,CH=TH+6;
+  const raw=aids.map(a=>({a,rx:sx(xOf(a)),ry:sy(yOf(a))}));
+  const bucket={};
+  raw.forEach(n=>{const k=Math.round(n.rx/8)+'_'+Math.round(n.ry/8);(bucket[k]=bucket[k]||[]).push(n);});
+  const nodes=[];
+  Object.values(bucket).forEach(g=>{
+    if(g.length===1){nodes.push({a:g[0].a,ax:g[0].rx,ay:g[0].ry});return;}
+    const cols=Math.ceil(Math.sqrt(g.length)),rows=Math.ceil(g.length/cols);
+    g.forEach((n,i)=>{
+      const c=i%cols,r=Math.floor(i/cols);
+      nodes.push({a:n.a,
+        ax:n.rx+(c-(cols-1)/2)*CW,
+        ay:n.ry+(r-(rows-1)/2)*CH});});});
+  const cl2=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  nodes.forEach(n=>{
+    n.ax=cl2(n.ax,PAD+TW/2,W-PAD-TW/2);n.ay=cl2(n.ay,PAD+TH/2,H-PAD-TH/2);
+    n.x=n.ax;n.y=n.ay;});
+  for(let it=0;it<150;it++){
     for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
-      const A=nodes[i],B=nodes[j],dx=B.x-A.x,dy=B.y-A.y;
-      const ox=(TW+4)-Math.abs(dx),oy=(TH+4)-Math.abs(dy);
-      if(ox>0&&oy>0){if(ox/TW<oy/TH){const s=(dx>=0?1:-1)*ox*.25;A.x-=s;B.x+=s;}
-        else{const s=(dy>=0?1:-1)*oy*.25;A.y-=s;B.y+=s;}}}
-    nodes.forEach(n=>{n.x+=(n.ax-n.x)*.06;n.y+=(n.ay-n.y)*.06;
-      n.x=Math.max(PAD+TW/2,Math.min(W-PAD-TW/2,n.x));n.y=Math.max(PAD+TH/2,Math.min(H-PAD-TH/2,n.y));});}
+      const A=nodes[i],B=nodes[j];let dx=B.x-A.x,dy=B.y-A.y;
+      const ox=CW-Math.abs(dx),oy=CH-Math.abs(dy);
+      if(ox>0&&oy>0){
+        if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5){dx=((i+j)%2?1:-1)*0.5;dy=0.5;}
+        const useX=(ox/CW)<(oy/CH);
+        if(useX){const k=(dx>=0?1:-1)*ox*.34;A.x-=k;B.x+=k;}
+        else{const k=(dy>=0?1:-1)*oy*.34;A.y-=k;B.y+=k;}}}
+    nodes.forEach(n=>{n.x+=(n.ax-n.x)*.055;n.y+=(n.ay-n.y)*.055;
+      n.x=cl2(n.x,PAD+TW/2,W-PAD-TW/2);n.y=cl2(n.y,PAD+TH/2,H-PAD-TH/2);});}
+  /* 복원력이 마지막까지 밀어내기를 방해해서 소수가 겹친 상태로 멈춥니다.
+     복원력 없이 겹침만 푸는 패스를 마지막에 돌려 표지가 서로 가리지 않게 보장합니다. */
+  for(let it=0;it<90;it++){
+    let hit=0;
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      const A=nodes[i],B=nodes[j];let dx=B.x-A.x,dy=B.y-A.y;
+      const ox=CW-Math.abs(dx),oy=CH-Math.abs(dy);
+      if(ox>0&&oy>0){hit++;
+        if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5){dx=((i+j)%2?1:-1)*0.5;dy=0.5;}
+        if((ox/CW)<(oy/CH)){const k=(dx>=0?1:-1)*ox*.5;A.x-=k;B.x+=k;}
+        else{const k=(dy>=0?1:-1)*oy*.5;A.y-=k;B.y+=k;}}}
+    nodes.forEach(n=>{n.x=cl2(n.x,PAD+TW/2,W-PAD-TW/2);n.y=cl2(n.y,PAD+TH/2,H-PAD-TH/2);});
+    if(!hit)break;}
+  const myId=ME?ME.id:null;
   const cx=sx(0),wl=sy(0);
-  const q=[0,0,0,0];aids.forEach(a=>{q[(xOf(a)>=0?1:0)+(yOf(a)>=0?2:0)]++;});
+  const q=[0,0,0,0];allAids.forEach(a=>{q[(xOf(a)>=0?1:0)+(yOf(a)>=0?2:0)]++;});
   const mem=(members||[]).map(m=>{const p=memberXY(m);return {m,x:sx(p.x),y:sy(p.y)};});
   const sz=a=>{const n=(IDF[a]||{n:1}).n,mx=Math.max(2,MEMBERS.length);
     return 0.78+Math.min(1,(n-1)/(mx*0.4))*0.5;};
@@ -1085,17 +1193,20 @@ function drawMap(host,opt){
   <rect x="${PAD-30}" y="${wl}" width="${W-(PAD-30)*2}" height="${H-PAD+30-wl}" fill="var(--blue)" opacity=".05"/>
   <line x1="${cx}" y1="${PAD-30}" x2="${cx}" y2="${H-PAD+30}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="5 5" opacity=".4"/>
   <line x1="${PAD-30}" y1="${wl}" x2="${W-PAD+30}" y2="${wl}" stroke="var(--blue)" stroke-width="2"/>
-  <text x="${W-PAD+34}" y="${wl-6}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="var(--blue-ink)">수면선</text>
-  <g font-family="IBM Plex Mono,monospace" font-size="13" font-weight="600" fill="var(--ink)">
-    <text x="${PAD-40}" y="${PAD-40}">↑ 메이저 · 수면 위</text>
-    <text x="${PAD-40}" y="${H-PAD+50}">↓ 마이너 · 심해</text>
-    <text x="${PAD-40}" y="${wl+22}">← 위로</text>
-    <text x="${W-PAD+34}" y="${wl+22}" text-anchor="end">충격 →</text></g>
-  <g font-family="IBM Plex Mono,monospace" font-size="11" fill="var(--ink-2)">
-    <text x="${PAD-40}" y="${PAD-20}">국민 위로작 ${q[2]}편</text>
-    <text x="${W-PAD+34}" y="${PAD-20}" text-anchor="end">국민 충격작 ${q[3]}편</text>
-    <text x="${PAD-40}" y="${H-PAD+30}">숨은 위로 ${q[0]}편</text>
-    <text x="${W-PAD+34}" y="${H-PAD+30}" text-anchor="end">컬트 하드코어 ${q[1]}편</text></g>
+  <text x="${W-PAD+50}" y="${wl-8}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="${FS2+1}"
+    font-weight="600" fill="var(--blue-ink)" stroke="var(--paper)" stroke-width="${SW}" paint-order="stroke">수면선</text>
+  <g font-family="IBM Plex Mono,monospace" font-size="${FS}" font-weight="600" fill="var(--ink)"
+     stroke="var(--paper)" stroke-width="${SW}" paint-order="stroke">
+    <text x="${PAD-56}" y="${PAD-46}">↑ 메이저 · 수면 위</text>
+    <text x="${PAD-56}" y="${H-PAD+56}">↓ 마이너 · 심해</text>
+    <text x="${PAD-56}" y="${wl+24}">← 위로</text>
+    <text x="${W-PAD+50}" y="${wl+24}" text-anchor="end">충격 →</text></g>
+  <g font-family="IBM Plex Mono,monospace" font-size="${FS2}" fill="var(--ink-2)"
+     stroke="var(--paper)" stroke-width="${SW-.5}" paint-order="stroke">
+    <text x="${PAD-56}" y="${PAD-24}">국민 위로작 ${q[2]}편</text>
+    <text x="${W-PAD+50}" y="${PAD-24}" text-anchor="end">국민 충격작 ${q[3]}편</text>
+    <text x="${PAD-56}" y="${H-PAD+32}">숨은 위로 ${q[0]}편</text>
+    <text x="${W-PAD+50}" y="${H-PAD+32}" text-anchor="end">컬트 하드코어 ${q[1]}편</text></g>
   ${nodes.map(n=>{const w=WORKS[n.a]||{title:'?'},is=mine.has(n.a),st=state(n.a),s=sz(n.a);
     const tw=TW*s,th=TH*s,x=(n.x-tw/2).toFixed(1),y=(n.y-th/2).toFixed(1);
     const c=w.cover||COVERS[n.a]||'';
@@ -1110,13 +1221,15 @@ function drawMap(host,opt){
           <text x="3" y="12" font-family="Gothic A1,sans-serif" font-size="8.5" font-weight="700" fill="var(--ink)">${esc(disp(w)).slice(0,16)}</text>`}
       <rect width="${tw.toFixed(1)}" height="${th.toFixed(1)}" fill="none" stroke="${stroke}" stroke-width="${sw}"${dash}/>
       <title>${esc(disp(w))} — ${depthOf(n.a)} · ${(IDF[n.a]||{n:1}).n}명 등록 · 마음 ${ZP[Math.round(moodStat(n.a).mean)-1]}${st==='dis'?' · 이견 있음':''}${st==='prov'?' · 한 명만 표시':''}</title></g>`;}).join('')}
-  ${mem.map(p=>{const is=p.m.id===ME.id;return `<g class="mb" data-mid="${esc(p.m.id)}" tabindex="0" role="button"
+  ${mem.map(p=>{const is=p.m.id===myId;return `<g class="mb" data-mid="${esc(p.m.id)}" tabindex="0" role="button"
     aria-label="${esc(p.m.name)}" style="cursor:pointer">
-    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${is?9:6.5}" fill="${is?'var(--pink-fill)':'var(--blue)'}" stroke="#fff" stroke-width="2.5"/>
-    <text x="${p.x.toFixed(1)}" y="${(p.y-14).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono,monospace"
-      font-size="12" font-weight="600" fill="${is?'var(--pink-ink)':'var(--blue-ink)'}"
-      stroke="var(--paper)" stroke-width="3.5" paint-order="stroke">${esc(p.m.name)}</text>
-    <title>${esc(p.m.name)} — 열 편의 무게중심</title></g>`;}).join('')}</svg>`;
+    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${is?(MOB?13:9):(MOB?10:6.5)}" fill="${is?'var(--pink-fill)':'var(--blue)'}" stroke="#fff" stroke-width="2.5"/>
+    <text x="${p.x.toFixed(1)}" y="${(p.y-(MOB?19:14)).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono,monospace"
+      font-size="${MOB?17:12}" font-weight="600" fill="${is?'var(--pink-ink)':'var(--blue-ink)'}"
+      stroke="var(--paper)" stroke-width="${SW-.5}" paint-order="stroke">${esc(p.m.name)}</text>
+    <title>${esc(p.m.name)} — 열 편의 무게중심</title></g>`;}).join('')}
+  ${aids.length<allAids.length?`<text x="${PAD-56}" y="${H-14}" font-family="IBM Plex Mono,monospace"
+    font-size="${FS2}" fill="var(--ink-2)">표지 ${aids.length}편만 표시 · 사분면 숫자는 전체 ${allAids.length}편</text>`:''}</svg>`;
   /* SVG <title> 은 마우스 올림에서만 뜨고 터치에서는 아무것도 나오지 않습니다.
      모바일에서 지도를 읽을 수 있게 표지·멤버를 눌러 하단 패널에 정보를 띄웁니다. */
   const panel=opt.panel?$(opt.panel):null;
@@ -1132,7 +1245,7 @@ function drawMap(host,opt){
   const showM=mid=>{const m=MEMBERS.find(x=>x.id===mid);if(!m)return;
     const p2=memberXY(m),deep=m.works.filter(w=>yOf(w.aid)<0).length;
     panel.innerHTML=`<p class="ph">누른 멤버</p><div class="pk"><div>
-      <div class="pt">${esc(m.name)}${m.id===ME.id?' — 나':''}</div>
+      <div class="pt">${esc(m.name)}${m.id===myId?' — 나':''}</div>
       <div class="pm">${p2.y>=0?'수면 위':'심해'} 쪽 · ${p2.x>=0?'충격':'위로'} 쪽 · 수면 아래 ${deep}편</div>
       <div class="pm">${esc(m.tags.join(' · '))}</div>
       ${m.decl?`<div class="pm">“${esc(m.decl)}”</div>`:''}</div></div>`;};
@@ -1152,12 +1265,108 @@ const mapLegend=()=>`<div class="legend">
   <span><i style="background:var(--pink-fill);border-radius:50%"></i>나</span>
   <span><i style="background:var(--blue);border-radius:50%"></i>다른 멤버</span></div>`;
 
+/* ══ 카드 이미지 · 공유 링크 ══ */
+function loadImg(src){return new Promise(res=>{if(!src)return res(null);
+  const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=()=>res(null);i.src=src;});}
+function wrapT(x,t,max){const out=[];let l='';
+  for(const c of String(t)){if(x.measureText(l+c).width>max){out.push(l);l=c;}else l+=c;}
+  if(l)out.push(l);return out;}
+async function drawCard(me,useImgs){
+  if(document.fonts&&document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
+  const W=2160,H=2700,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const INK='#16182B',PINK='#FF3E96';
+  x.fillStyle='#D9D9CE';x.fillRect(0,0,W,H);
+  x.fillStyle='rgba(22,24,43,.10)';
+  for(let a=0;a<W;a+=16)for(let b=0;b<H;b+=16){x.beginPath();x.arc(a,b,2,0,7);x.fill();}
+  const M=130;
+  x.strokeStyle=INK;x.lineWidth=8;x.strokeRect(M-34,M-34,W-(M-34)*2,H-(M-34)*2);
+  x.fillStyle=INK;x.font='600 34px "IBM Plex Mono",monospace';
+  x.fillText('애독자 카드 No. '+me.id.slice(0,6).toUpperCase(),M,M+30);
+  x.textAlign='right';x.fillText('취향 유전자 지도 · 만화/웹툰',W-M,M+30);x.textAlign='left';
+  x.beginPath();x.moveTo(M,M+70);x.lineTo(W-M,M+70);x.lineWidth=5;x.stroke();
+  let y=M+230;
+  x.font='900 168px "Gothic A1",sans-serif';
+  x.fillStyle=PINK;x.fillText(me.name,M+10,y+9);x.fillStyle=INK;x.fillText(me.name,M,y);
+  y+=66;
+  if(me.decl){x.font='400 56px "Noto Serif KR",serif';x.fillStyle='rgba(22,24,43,.72)';
+    wrapT(x,'“'+me.decl+'”',W-M*2).slice(0,2).forEach(l=>{y+=76;x.fillText(l,M,y);});}
+  y+=70;x.font='600 38px "IBM Plex Mono",monospace';x.fillStyle=INK;
+  wrapT(x,me.tags.join('  ·  '),W-M*2).slice(0,2).forEach((l,i)=>x.fillText(l,M,y+i*50));
+  y+=(me.tags.length>4?110:60);
+  const imgs=useImgs?await Promise.all(me.works.map(w=>loadImg(w.cover||COVERS[w.aid]||''))):me.works.map(()=>null);
+  const cols=5,gap=30,cw=(W-M*2-gap*(cols-1))/cols,ch=cw*1.5;
+  me.works.forEach((w,i)=>{const cx=M+(i%cols)*(cw+gap),cy=y+Math.floor(i/cols)*(ch+gap);
+    x.fillStyle='#C6C6B8';x.fillRect(cx,cy,cw,ch);
+    const im=imgs[i];
+    if(im){const s=Math.max(cw/im.width,ch/im.height),iw=im.width*s,ih=im.height*s;
+      x.save();x.beginPath();x.rect(cx,cy,cw,ch);x.clip();x.drawImage(im,cx+(cw-iw)/2,cy+(ch-ih)/2,iw,ih);x.restore();}
+    else{x.fillStyle=INK;x.font='700 30px "Gothic A1",sans-serif';
+      wrapT(x,disp(w),cw-24).slice(0,7).forEach((l,k)=>x.fillText(l,cx+12,cy+50+k*36));}
+    x.strokeStyle=INK;x.lineWidth=4;x.strokeRect(cx,cy,cw,ch);});
+  y+=ch*2+gap+96;
+  const N=MEMBERS.length,pp=memberXY(me);
+  const deep=me.works.filter(w=>yOf(w.aid)<0).length;
+  const uni=me.works.filter(w=>IDF[w.aid].n===1).length,top=neighbors(me.id,1)[0];
+  x.beginPath();x.moveTo(M,y);x.lineTo(W-M,y);x.lineWidth=5;x.strokeStyle=INK;x.stroke();
+  const S=[[String(deep),'수면 아래'],[String(uni),'나만 등록'],[pp.x>=0?'충격':'위로','기운 방향'],
+    [top?pct(top.s)+'%':'—','최고 일치'],[String(N),'집계 인원']];
+  const sw=(W-M*2)/5;
+  S.forEach(([vv,kk],i)=>{const sx2=M+i*sw;
+    x.fillStyle=INK;x.font='600 84px "IBM Plex Mono",monospace';x.fillText(vv,sx2+6,y+112);
+    x.font='400 32px "IBM Plex Mono",monospace';x.fillStyle='rgba(22,24,43,.7)';x.fillText(kk,sx2+6,y+164);});
+  y+=222;
+  x.font='400 42px "Noto Serif KR",serif';x.fillStyle=INK;
+  const list=me.works.map(w=>disp(w)).join(' / ');
+  x.fillStyle=PINK;x.fillRect(M,y-34,10,3*58+14);x.fillStyle=INK;
+  wrapT(x,list,W-M*2-46).slice(0,3).forEach((l,i)=>x.fillText(l,M+38,y+i*58));
+  const BY=H-M-14;
+  x.font='700 38px "Gothic A1",sans-serif';let bx=M;
+  badges(me).slice(0,4).forEach(b=>{const w=x.measureText(b.t).width+42;
+    if(bx+w>W-M)return;
+    x.strokeStyle=INK;x.lineWidth=4;x.strokeRect(bx,BY-52,w,70);
+    x.fillStyle=INK;x.fillText(b.t,bx+21,BY);bx+=w+18;});
+  /* 표지가 다른 도메인에서 왔고 CORS 허용 헤더가 없으면 canvas 가 오염되고
+     toDataURL 이 예외를 던집니다. 그때는 표지 없이 다시 그려서 저장을 반드시 성공시킵니다. */
+  let url=null;
+  try{url=c.toDataURL('image/png');}catch(e){url=null;}
+  return {url,miss:imgs.filter(i=>!i).length};
+}
+async function exportCard(me){
+  let r=await drawCard(me,true),fell=false;
+  if(!r.url){fell=true;r=await drawCard(me,false);}
+  if(!r.url)throw new Error('이 브라우저에서 이미지를 만들지 못했습니다');
+  const a=document.createElement('a');
+  a.download=`취향유전자지도_${me.name}.png`;a.href=r.url;a.click();
+  toast(fell?'표지를 이미지에 넣을 수 없는 환경이라 제목으로 저장했습니다'
+    :r.miss?`저장했습니다 · 표지 ${r.miss}칸은 제목으로 들어갔습니다`:'PNG를 저장했습니다');
+}
+const cardLink=id=>location.origin+location.pathname+'?card='+encodeURIComponent(id);
+const txtCardShare=me=>txtCard(me)+'\n'+cardLink(me.id);
+function txtRoster(){
+  const subs=MEMBERS.slice().sort((a,b)=>a.ts-b.ts);
+  const moved=MEMBERS.filter(m=>m.works.some(w=>w.mood!==w.seedMood)).length;
+  return sl('*취향 유전자 지도* 제출 현황','',
+    `제출 ${MEMBERS.length}명 · 마음 배치를 직접 옮긴 사람 ${moved}명`,'',
+    `낸 사람: ${subs.map(m=>m.name).join(', ')||'없음'}`,'',
+    '> 아직 안 낸 분은 링크에서 열 편만 채워주세요. 5분 걸립니다.','',P);
+}
+
 /* ── 내 리포트 ── */
 function viewReport(v){
-  const me=ME,N=MEMBERS.length,p=memberXY(me);
+  const me=VIEW_ID?(MEMBERS.find(m=>m.id===VIEW_ID)||ME):ME;
+  if(!me){v.innerHTML='<div class="empty"><p>카드를 찾을 수 없습니다.</p></div>';return;}
+  const guest=!!(VIEW_ID&&(!ME||ME.id!==VIEW_ID));
+  const N=MEMBERS.length,p=memberXY(me);
   const deep=me.works.filter(w=>yOf(w.aid)<0).length;
   const uni=me.works.filter(w=>IDF[w.aid].n===1).length,top=neighbors(me.id,1)[0];
   v.innerHTML=`
+  ${JUST&&!guest?`<section class="sect" style="border:2px solid var(--pink-fill);padding:20px;background:rgba(224,37,127,.05)">
+    <p class="kicker">제출 완료</p><h2>슬랙에 이걸 붙이세요</h2>
+    <p class="note">이 페이지의 목적은 답을 주는 게 아니라 대화를 여는 것입니다. 아래 문장과 링크를 클럽 채널에 붙이면 됩니다.
+      링크를 누른 사람은 제 카드를 바로 볼 수 있습니다.</p>
+    <div style="margin-top:18px">${proof('내 카드 소개 + 링크',txtCardShare(me))}</div>
+    <p class="how" style="margin-top:0">더 많은 대화거리는 위쪽 <b>대화거리</b> 탭에 있습니다 — 변론 요청, 나만 가진 조합, 반대편 매칭.</p>
+  </section>`:''}
   <section class="sect">
     <div class="dna"><div class="top"><span>애독자 카드 No. ${esc(me.id.slice(0,6).toUpperCase())}</span>
       <span>만화 / 웹툰 ${String(me.works.length).padStart(2,'0')}편 · 집계 ${N}명</span></div>
@@ -1171,6 +1380,12 @@ function viewReport(v){
         <div><div class="v">${p.x>=0?'충격':'위로'}</div><div class="k">기운 방향</div></div>
         <div><div class="v">${top?pct(top.s)+'%':'—'}</div><div class="k">최고 일치</div></div></div></div>
     <div class="bdgs">${badges(me).map(b=>`<div class="bdg${b.hot?' hot':''}"><div class="t">${esc(b.t)}</div><div class="d">${esc(b.d)}</div></div>`).join('')}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center">
+      <button class="btn" id="png">카드 이미지 저장 · PNG</button>
+      <button class="btn ghost" id="lnk">이 카드 링크 복사</button>
+      <span class="spin" id="ps"></span></div>
+    ${guest?`<p class="how" style="margin-top:16px">${esc(me.name)} 님의 카드를 보고 있습니다.
+      <a href="${esc(location.pathname)}" style="color:var(--blue-ink)">내 카드로 돌아가기</a></p>`:''}
   </section>
   <section class="sect"><p class="kicker">개인 DNA 맵</p><h2>내 열 편이 놓인 자리</h2>
     <p class="note">세로는 얼마나 알려진 작품인가, 가로는 소유자들이 표시한 마음의 평균입니다. 분홍 테두리가 내 열 편, 분홍 점이 그 무게중심입니다.</p>
@@ -1193,6 +1408,10 @@ function viewReport(v){
     const aids=new Set(me.works.map(w=>w.aid));nb.forEach(m=>m.works.forEach(w=>aids.add(w.aid)));
     drawMap($('#ego'),{aids:[...aids].slice(0,56),members:MAPMEM?[me,...nb]:[],
       mine:new Set(me.works.map(w=>w.aid)),panel:'#pkEgo'});}
+  $('#png').onclick=async()=>{$('#png').disabled=true;$('#ps').textContent='그리는 중…';
+    try{await exportCard(me);}catch(e){toast('이미지 저장이 실패했습니다: '+((e&&e.message)||e));}
+    $('#ps').textContent='';$('#png').disabled=false;};
+  $('#lnk').onclick=b=>copyText(cardLink(me.id),b.currentTarget);
 }
 
 /* ── 클럽 지도 ── */
@@ -1344,10 +1563,20 @@ function viewBlind(v){
     setTimeout(()=>{BL.round++;BL.q=BL.round>=10?null:newRound();render();},1100);});
 }
 
+/* 휴대폰을 돌리면 지도 치수 기준이 바뀌므로 640px 경계를 넘을 때만 다시 그립니다. */
+let lastMob=(typeof window!=='undefined'&&window.innerWidth?window.innerWidth:1024)<640,rzT=null;
+if(typeof window!=='undefined')window.addEventListener('resize',()=>{
+  clearTimeout(rzT);rzT=setTimeout(()=>{
+    const now=window.innerWidth<640;
+    if(now!==lastMob){lastMob=now;if(ME||VIEW_ID)render();}},260);});
+
 (async function(){
   $('#view').innerHTML='<p class="spin">클럽 기록을 불러오는 중…</p>';
   try{await loadAll();}catch(e){}
-  if(ME)TAB='report';
+  /* ?card=<id> 로 들어오면 그 사람의 카드를 보여줍니다. 슬랙에 링크를 뿌릴 때 쓰입니다. */
+  try{const q=new URLSearchParams(location.search).get('card');
+    if(q&&MEMBERS.some(m=>m.id===q)){VIEW_ID=q;TAB='report';}}catch(e){}
+  if(!VIEW_ID&&ME)TAB='report';
   render();
 })();
 </script>
