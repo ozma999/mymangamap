@@ -866,7 +866,7 @@ const hashk=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;retu
 function cover(w,cls){
   const c=w.cover||COVERS[w.aid]||'';
   return `<div class="b ${cls||''}"><div class="cv k${hashk(w.aid||w.title)}${c?' has':''}">
-    ${c?`<img src="${esc(c)}" alt="" loading="lazy">`:''}<span class="tt">${esc(w.ko||w.title)}</span></div></div>`;
+    ${c?`<img src="${esc(c)}" alt="" loading="lazy"${c.startsWith('data:')?'':' crossorigin="anonymous"'}>`:''}<span class="tt">${esc(w.ko||w.title)}</span></div></div>`;
 }
 function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),3200);}
 const disp=w=>w.ko||w.title;
@@ -1457,9 +1457,8 @@ function drawMap(host,opt){
   const NW=aids.length;
   const SC=MOB?(NW<=8?1.35:NW<=14?1.15:1):(NW<=12?1.9:NW<=20?1.5:NW<=32?1.25:1);
   const W=MOB?540:940;
-  const H=MOB?(NW<=8?640:750):(NW<=12?580:NW<=24?640:NW<=40?700:770);
+  const H=MOB?(NW<=8?640:NW<=14?750:820):(NW<=12?580:NW<=24?640:NW<=40?700:770);
   const PAD=MOB?60:92;
-  const TW=Math.round((MOB?58:42)*SC),TH=Math.round((MOB?87:63)*SC);
   const FS=MOB?19:13,FS2=MOB?16:12,SW=MOB?5:4;
   /* 표시된 작품이 전부 내 것이면 분홍 테두리는 아무것도 구분하지 못합니다.
      등록자 수가 전부 같으면 표지 크기 차이도 정보가 없습니다. 둘 다 그때는 끕니다. */
@@ -1468,63 +1467,63 @@ function drawMap(host,opt){
   const sizeVaries=Math.max(...owners)>Math.min(...owners);
   const BOT=MOB?102:88;                 /* 하단 축 캡션 + 사분면 라벨 자리 */
   const TOPB=MOB?78:70;                 /* 상단 사분면 라벨 자리 */
-  const yTop=TOPB+TH/2, yBot=H-BOT-TH/2;
-  const xL=PAD+TW/2, xR=W-PAD-TW/2;
-  const sx=v=>xL+(v+1)/2*(xR-xL);
-  const sy=v=>yBot-(v+1)/2*(yBot-yTop);
-  /* 멤버가 적으면 여러 작품의 목표 좌표가 완전히 같아집니다(예: 열 편을 모두 「마음이 부서짐」
-     으로 표시한 1인 클럽). 이때 모두를 같은 한 점으로 당기면 밀어내도 다시 모여서 세로줄로
-     쌓입니다. 그래서 좌표가 겹치는 무리는 그 좌표를 중심으로 격자 자리를 미리 나눠주고,
-     각자 자기 자리로 당기게 합니다. 무리의 중심은 여전히 진짜 좌표입니다. */
-  const CW=TW+6,CH=TH+6;
-  const raw=aids.map(a=>({a,rx:sx(xOf(a)),ry:sy(yOf(a))}));
-  const bucket={};
-  raw.forEach(n=>{const k=Math.round(n.rx/8)+'_'+Math.round(n.ry/8);(bucket[k]=bucket[k]||[]).push(n);});
-  const nodes=[];
-  Object.values(bucket).forEach(g=>{
-    if(g.length===1){nodes.push({a:g[0].a,ax:g[0].rx,ay:g[0].ry});return;}
-    const cols=Math.ceil(Math.sqrt(g.length)),rows=Math.ceil(g.length/cols);
-    g.forEach((n,i)=>{
-      const c=i%cols,r=Math.floor(i/cols);
-      nodes.push({a:n.a,
-        ax:n.rx+(c-(cols-1)/2)*CW,
-        ay:n.ry+(r-(rows-1)/2)*CH});});});
   const cl2=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
-  nodes.forEach(n=>{
-    n.ax=cl2(n.ax,xL,xR);n.ay=cl2(n.ay,yTop,yBot);
-    n.x=n.ax;n.y=n.ay;});
-  for(let it=0;it<150;it++){
-    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
-      const A=nodes[i],B=nodes[j];let dx=B.x-A.x,dy=B.y-A.y;
-      const ox=CW-Math.abs(dx),oy=CH-Math.abs(dy);
-      if(ox>0&&oy>0){
-        if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5){dx=((i+j)%2?1:-1)*0.5;dy=0.5;}
-        const useX=(ox/CW)<(oy/CH);
-        if(useX){const k=(dx>=0?1:-1)*ox*.34;A.x-=k;B.x+=k;}
-        else{const k=(dy>=0?1:-1)*oy*.34;A.y-=k;B.y+=k;}}}
-    nodes.forEach(n=>{n.x+=(n.ax-n.x)*.055;n.y+=(n.ay-n.y)*.055;
-      n.x=cl2(n.x,xL,xR);n.y=cl2(n.y,yTop,yBot);});}
-  /* 복원력이 마지막까지 밀어내기를 방해해서 소수가 겹친 상태로 멈춥니다.
-     복원력 없이 겹침만 푸는 패스를 마지막에 돌려 표지가 서로 가리지 않게 보장합니다. */
-  /* 실제 데이터는 좌표가 국지적으로 뭉쳐서 한 번의 분리로는 수렴하지 않습니다.
-     겹침이 남으면 미세하게 흔들어 대칭을 깨고 다시 풀기를 세 번까지 시도합니다. */
-  /* 흔들기를 패스 시작에 두어 항상 「풀기」로 끝나게 합니다.
-     이전 구조는 마지막에 흔들고 끝나서 오히려 더 나쁜 상태가 남을 수 있었습니다. */
-  let hit=0;
-  for(let pass=0;pass<4;pass++){
-    if(pass>0)nodes.forEach(n=>{n.x+=(Math.random()-.5)*9;n.y+=(Math.random()-.5)*9;});
+
+  /* 배치는 데이터에 따라 수렴이 어려울 때가 있습니다. 겹침이 남으면 표지를 조금 줄여
+     다시 배치합니다. 위치의 뜻은 그대로 두고 크기만 양보하므로 겹침이 반드시 사라집니다. */
+  let TW,TH,CW,CH,xL,xR,yTop,yBot,sx,sy,nodes,shrink=1,hit=0;
+  for(let attempt=0;attempt<4;attempt++){
+    TW=Math.round((MOB?58:42)*SC*shrink); TH=Math.round((MOB?87:63)*SC*shrink);
+    CW=TW+6; CH=TH+6;
+    yTop=TOPB+TH/2; yBot=H-BOT-TH/2; xL=PAD+TW/2; xR=W-PAD-TW/2;
+    sx=v=>xL+(v+1)/2*(xR-xL);
+    sy=v=>yBot-(v+1)/2*(yBot-yTop);
+    /* 멤버가 적으면 여러 작품의 목표 좌표가 완전히 같아집니다. 모두를 한 점으로 당기면
+       밀어내도 다시 모여 세로줄로 쌓이므로, 겹치는 무리에는 격자 자리를 미리 나눠줍니다.
+       무리의 중심은 여전히 진짜 좌표이고, 화면 끝에서는 중심을 안쪽으로 당깁니다. */
+    const raw=aids.map(a=>({a,rx:sx(xOf(a)),ry:sy(yOf(a))}));
+    const bucket={};
+    raw.forEach(n=>{const k=Math.round(n.rx/8)+'_'+Math.round(n.ry/8);(bucket[k]=bucket[k]||[]).push(n);});
+    nodes=[];
+    Object.values(bucket).forEach(g=>{
+      if(g.length===1){nodes.push({a:g[0].a,ax:g[0].rx,ay:g[0].ry});return;}
+      const cols=Math.ceil(Math.sqrt(g.length)),rows=Math.ceil(g.length/cols);
+      const hw=(cols-1)/2*CW, hh=(rows-1)/2*CH;
+      const cx0=(xL+hw<=xR-hw)?cl2(g[0].rx,xL+hw,xR-hw):(xL+xR)/2;
+      const cy0=(yTop+hh<=yBot-hh)?cl2(g[0].ry,yTop+hh,yBot-hh):(yTop+yBot)/2;
+      g.forEach((n,i)=>{const c=i%cols,r=Math.floor(i/cols);
+        nodes.push({a:n.a, ax:cx0+(c-(cols-1)/2)*CW, ay:cy0+(r-(rows-1)/2)*CH});});});
+    nodes.forEach(n=>{n.ax=cl2(n.ax,xL,xR);n.ay=cl2(n.ay,yTop,yBot);n.x=n.ax;n.y=n.ay;});
+    /* 1단계: 원래 좌표로 당기면서 겹침 완화 */
     for(let it=0;it<150;it++){
-      hit=0;
       for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
         const A=nodes[i],B=nodes[j];let dx=B.x-A.x,dy=B.y-A.y;
         const ox=CW-Math.abs(dx),oy=CH-Math.abs(dy);
-        if(ox>0&&oy>0){hit++;
+        if(ox>0&&oy>0){
           if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5){dx=((i+j)%2?1:-1)*0.5;dy=0.5;}
-          if((ox/CW)<(oy/CH)){const k=(dx>=0?1:-1)*ox*.5;A.x-=k;B.x+=k;}
-          else{const k=(dy>=0?1:-1)*oy*.5;A.y-=k;B.y+=k;}}}
-      nodes.forEach(n=>{n.x=cl2(n.x,xL,xR);n.y=cl2(n.y,yTop,yBot);});
+          if((ox/CW)<(oy/CH)){const k=(dx>=0?1:-1)*ox*.34;A.x-=k;B.x+=k;}
+          else{const k=(dy>=0?1:-1)*oy*.34;A.y-=k;B.y+=k;}}}
+      nodes.forEach(n=>{n.x+=(n.ax-n.x)*.055;n.y+=(n.ay-n.y)*.055;
+        n.x=cl2(n.x,xL,xR);n.y=cl2(n.y,yTop,yBot);});}
+    /* 2단계: 복원력 없이 겹침만 풀기. 흔들기를 패스 시작에 두어 항상 「풀기」로 끝냅니다. */
+    hit=0;
+    for(let pass=0;pass<4;pass++){
+      if(pass>0)nodes.forEach(n=>{n.x+=(Math.random()-.5)*9;n.y+=(Math.random()-.5)*9;});
+      for(let it=0;it<150;it++){
+        hit=0;
+        for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+          const A=nodes[i],B=nodes[j];let dx=B.x-A.x,dy=B.y-A.y;
+          const ox=CW-Math.abs(dx),oy=CH-Math.abs(dy);
+          if(ox>0&&oy>0){hit++;
+            if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5){dx=((i+j)%2?1:-1)*0.5;dy=0.5;}
+            if((ox/CW)<(oy/CH)){const k=(dx>=0?1:-1)*ox*.5;A.x-=k;B.x+=k;}
+            else{const k=(dy>=0?1:-1)*oy*.5;A.y-=k;B.y+=k;}}}
+        nodes.forEach(n=>{n.x=cl2(n.x,xL,xR);n.y=cl2(n.y,yTop,yBot);});
+        if(!hit)break;}
       if(!hit)break;}
-    if(!hit)break;}
+    if(!hit)break;
+    shrink*=0.87;   /* 그래도 겹치면 표지를 줄여 다시 배치합니다 */
+  }
   const myId=ME?ME.id:null;
   const cx=sx(0),wl=sy(0);
   const q=[0,0,0,0];allAids.forEach(a=>{q[(xOf(a)>=0?1:0)+(yOf(a)>=0?2:0)]++;});
@@ -1640,67 +1639,127 @@ function mapLegend(o){
 }
 
 /* ══ 카드 이미지 · 공유 링크 ══ */
-function loadImg(src){return new Promise(res=>{if(!src)return res(null);
-  const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=()=>res(null);i.src=src;});}
+/* 같은 URL을 브라우저가 CORS 없이 먼저 받아 캐시에 넣으면, 이후 CORS 요청이 그 응답을
+   재사용하면서 거부됩니다. 그래서 3단으로 내려갑니다.
+   ① 그대로 CORS 요청 ② 주소를 살짝 바꿔 새로 받기 ③ 우리 서버를 거쳐 같은 출처로 받기 */
+function tryImg(src,cors){return new Promise(res=>{
+  if(!src)return res(null);
+  const i=new Image();
+  if(cors)i.crossOrigin='anonymous';
+  i.onload=()=>res(i);i.onerror=()=>res(null);
+  i.src=src;});}
+async function loadImg(src){
+  if(!src)return null;
+  if(src.startsWith('data:'))return await tryImg(src,false);   /* 직접 올린 표지는 오염되지 않습니다 */
+  let im=await tryImg(src,true);                 if(im)return im;
+  im=await tryImg(src+(src.includes('?')?'&':'?')+'cors=1',true); if(im)return im;
+  if(STORE==='api'){im=await tryImg('/api/cover?u='+encodeURIComponent(src),false);if(im)return im;}
+  return null;
+}
 function wrapT(x,t,max){const out=[];let l='';
   for(const c of String(t)){if(x.measureText(l+c).width>max){out.push(l);l=c;}else l+=c;}
   if(l)out.push(l);return out;}
 async function drawCard(me,useImgs){
   if(document.fonts&&document.fonts.ready){try{await document.fonts.ready;}catch(e){}}
   const W=2160,H=2700,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
-  const INK='#16182B',PINK='#FF3E96';
+  const INK='#16182B',PINK='#FF3E96',PINKI='#A3004F',SOFT='rgba(22,24,43,.72)';
   x.fillStyle='#D9D9CE';x.fillRect(0,0,W,H);
   x.fillStyle='rgba(22,24,43,.10)';
   for(let a=0;a<W;a+=16)for(let b=0;b<H;b+=16){x.beginPath();x.arc(a,b,2,0,7);x.fill();}
   const M=130;
   x.strokeStyle=INK;x.lineWidth=8;x.strokeRect(M-34,M-34,W-(M-34)*2,H-(M-34)*2);
-  x.fillStyle=INK;x.font='600 34px "IBM Plex Mono",monospace';
+  const rule=(yy,lw)=>{x.beginPath();x.moveTo(M,yy);x.lineTo(W-M,yy);x.lineWidth=lw||5;x.strokeStyle=INK;x.stroke();};
+
+  /* 머리 */
+  /* 캔버스는 글자마다 폰트를 대체하므로, 모노로 지정한 한글이 시스템 폰트로 떨어져
+     굵기가 튀었습니다. 숫자와 주소만 모노로 두고 한글은 고딕으로 통일합니다. */
+  x.fillStyle=INK;x.font='700 34px "Gothic A1",sans-serif';
   x.fillText('애독자 카드 No. '+me.id.slice(0,6).toUpperCase(),M,M+30);
   x.textAlign='right';x.fillText('취향 유전자 지도 · 만화/웹툰',W-M,M+30);x.textAlign='left';
-  x.beginPath();x.moveTo(M,M+70);x.lineTo(W-M,M+70);x.lineWidth=5;x.stroke();
-  let y=M+230;
-  x.font='900 168px "Gothic A1",sans-serif';
-  x.fillStyle=PINK;x.fillText(me.name,M+10,y+9);x.fillStyle=INK;x.fillText(me.name,M,y);
-  y+=66;
-  if(me.decl){x.font='400 56px "Noto Serif KR",serif';x.fillStyle='rgba(22,24,43,.72)';
-    wrapT(x,'“'+me.decl+'”',W-M*2).slice(0,2).forEach(l=>{y+=76;x.fillText(l,M,y);});}
-  y+=70;x.font='600 38px "IBM Plex Mono",monospace';x.fillStyle=INK;
-  wrapT(x,me.tags.join('  ·  '),W-M*2).slice(0,2).forEach((l,i)=>x.fillText(l,M,y+i*50));
-  y+=(me.tags.length>4?110:60);
+  rule(M+70);
+
+  /* 이름 · 선언문 · 취향 축 */
+  let y=M+218;
+  x.font='900 162px "Gothic A1",sans-serif';
+  x.fillStyle=PINK;x.fillText(me.name,M+9,y+8);x.fillStyle=INK;x.fillText(me.name,M,y);
+  y+=52;
+  if(me.decl){x.font='400 54px "Noto Serif KR",serif';x.fillStyle=SOFT;
+    wrapT(x,'“'+me.decl+'”',W-M*2).slice(0,2).forEach(l=>{y+=72;x.fillText(l,M,y);});}
+  y+=62;x.font='700 36px "Gothic A1",sans-serif';x.fillStyle=PINKI;
+  const tl=wrapT(x,me.tags.join('  ·  '),W-M*2).slice(0,2);
+  tl.forEach((l,i)=>x.fillText(l,M,y+i*48));
+  y+=tl.length*48+30;
+
+  /* 표지 열 장. 표지가 없을 때도 의도된 지면으로 보이게 제목을 크게 가운데 놓습니다. */
   const imgs=useImgs?await Promise.all(me.works.map(w=>loadImg(w.cover||COVERS[w.aid]||''))):me.works.map(()=>null);
-  const cols=5,gap=30,cw=(W-M*2-gap*(cols-1))/cols,ch=cw*1.5;
+  const cols=5,gap=28,cw=(W-M*2-gap*(cols-1))/cols,ch=cw*1.5;
   me.works.forEach((w,i)=>{const cx=M+(i%cols)*(cw+gap),cy=y+Math.floor(i/cols)*(ch+gap);
     x.fillStyle='#C6C6B8';x.fillRect(cx,cy,cw,ch);
     const im=imgs[i];
     if(im){const s=Math.max(cw/im.width,ch/im.height),iw=im.width*s,ih=im.height*s;
       x.save();x.beginPath();x.rect(cx,cy,cw,ch);x.clip();x.drawImage(im,cx+(cw-iw)/2,cy+(ch-ih)/2,iw,ih);x.restore();}
-    else{x.fillStyle=INK;x.font='700 30px "Gothic A1",sans-serif';
-      wrapT(x,disp(w),cw-24).slice(0,7).forEach((l,k)=>x.fillText(l,cx+12,cy+50+k*36));}
+    else{
+      x.save();x.beginPath();x.rect(cx,cy,cw,ch);x.clip();
+      x.fillStyle=INK;x.font='900 46px "Gothic A1",sans-serif';x.textAlign='center';
+      const L=wrapT(x,disp(w),cw-40).slice(0,6);
+      const y0=cy+ch/2-(L.length-1)*30;
+      L.forEach((l,k)=>x.fillText(l,cx+cw/2,y0+k*60));
+      x.textAlign='left';x.restore();}
     x.strokeStyle=INK;x.lineWidth=4;x.strokeRect(cx,cy,cw,ch);});
-  y+=ch*2+gap+96;
+  y+=ch*2+gap+84;
+
+  /* 숫자 다섯 개. 1인 클럽에서 「—」로 비던 자리를 말로 채웁니다. */
   const N=MEMBERS.length,pp=memberXY(me);
   const deep=me.works.filter(w=>yOf(w.aid)<0).length;
   const uni=me.works.filter(w=>IDF[w.aid].n===1).length,top=neighbors(me.id,1)[0];
-  x.beginPath();x.moveTo(M,y);x.lineTo(W-M,y);x.lineWidth=5;x.strokeStyle=INK;x.stroke();
-  const S=[[String(deep),'수면 아래'],[String(uni),'나만 등록'],[pp.x>=0?'충격':'위로','기운 방향'],
-    [top?pct(top.s)+'%':'—','최고 일치'],[String(N),'집계 인원']];
+  rule(y);
+  const S=[[String(deep),'수면 아래'],[String(uni),'나만 등록'],
+    [pp.x>=0?'충격':'위로','마음이 기운 쪽'],
+    [top?pct(top.s)+'%':'아직 없음','최고 일치'],[String(N)+'명','집계 인원']];
   const sw=(W-M*2)/5;
   S.forEach(([vv,kk],i)=>{const sx2=M+i*sw;
-    x.fillStyle=INK;x.font='600 84px "IBM Plex Mono",monospace';x.fillText(vv,sx2+6,y+112);
-    x.font='400 32px "IBM Plex Mono",monospace';x.fillStyle='rgba(22,24,43,.7)';x.fillText(kk,sx2+6,y+164);});
-  y+=222;
-  x.font='400 42px "Noto Serif KR",serif';x.fillStyle=INK;
-  const list=me.works.map(w=>disp(w)).join(' / ');
-  x.fillStyle=PINK;x.fillRect(M,y-34,10,3*58+14);x.fillStyle=INK;
-  wrapT(x,list,W-M*2-46).slice(0,3).forEach((l,i)=>x.fillText(l,M+38,y+i*58));
-  const BY=H-M-14;
-  x.font='700 38px "Gothic A1",sans-serif';let bx=M;
-  badges(me).slice(0,4).forEach(b=>{const w=x.measureText(b.t).width+42;
-    if(bx+w>W-M)return;
-    x.strokeStyle=INK;x.lineWidth=4;x.strokeRect(bx,BY-52,w,70);
-    x.fillStyle=INK;x.fillText(b.t,bx+21,BY);bx+=w+18;});
-  /* 표지가 다른 도메인에서 왔고 CORS 허용 헤더가 없으면 canvas 가 오염되고
-     toDataURL 이 예외를 던집니다. 그때는 표지 없이 다시 그려서 저장을 반드시 성공시킵니다. */
+    x.fillStyle=INK;
+    x.font=(vv.length>3?'900 58px "Gothic A1",sans-serif':'600 80px "IBM Plex Mono",monospace');
+    x.fillText(vv,sx2+6,y+106);
+    x.font='700 31px "Gothic A1",sans-serif';x.fillStyle=SOFT;x.fillText(kk,sx2+6,y+156);});
+  y+=248;
+
+  /* 지도에서 내 자리 — 아래쪽 빈 공간을 뜻 있는 정보로 채웁니다 */
+  x.fillStyle=PINK;x.fillRect(M,y-30,10,88);
+  x.fillStyle=INK;x.font='900 44px "Gothic A1",sans-serif';
+  x.fillText('지도에서 내 자리',M+34,y+6);
+  x.font='400 38px "Noto Serif KR",serif';x.fillStyle=SOFT;
+  x.fillText((pp.y>=0?'수면 위':'심해')+' 쪽 · '+(pp.x>=0?'충격':'위로')+' 쪽'
+    +(deep?'   수면 아래 '+deep+'편':''),M+34,y+52);
+  y+=152;
+
+  /* 열 편 목록 */
+  x.font='700 30px "Gothic A1",sans-serif';x.fillStyle=PINKI;
+  x.fillText('인생작 열 편',M,y);
+  y+=48;
+  x.font='400 40px "Noto Serif KR",serif';x.fillStyle=INK;
+  wrapT(x,me.works.map(w=>disp(w)).join('  /  '),W-M*2).slice(0,3).forEach((l,i)=>x.fillText(l,M,y+i*54));
+  y+=3*54+18;
+
+  /* 배지 · 발행 정보 */
+  const bd=badges(me).slice(0,4);
+  x.font='700 36px "Gothic A1",sans-serif';let bx=M;
+  bd.forEach(b=>{const bw=x.measureText(b.t).width+40;
+    if(bx+bw>W-M)return;
+    x.strokeStyle=INK;x.lineWidth=4;x.strokeRect(bx,y-46,bw,66);
+    x.fillStyle=INK;x.fillText(b.t,bx+20,y);bx+=bw+16;});
+
+  const FY=H-M-6;
+  rule(FY-58,3);
+  x.font='700 32px "Gothic A1",sans-serif';x.fillStyle=SOFT;
+  x.fillText('만화·웹툰 인생작 열 편으로 그리는 클럽 지도',M,FY);
+  x.font='400 32px "IBM Plex Mono",monospace';
+  x.textAlign='right';
+  let host='';try{host=location.host+location.pathname.replace(/\/index\.html$/,'');}catch(e){}
+  x.fillText(host||'취향 유전자 지도',W-M,FY);x.textAlign='left';
+
+  /* CORS 허용 헤더가 없으면 canvas 가 오염되어 toDataURL 이 예외를 던집니다.
+     그때는 표지 없이 다시 그려 저장을 반드시 성공시킵니다. */
   let url=null;
   try{url=c.toDataURL('image/png');}catch(e){url=null;}
   return {url,miss:imgs.filter(i=>!i).length};
