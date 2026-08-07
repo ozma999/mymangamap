@@ -866,7 +866,7 @@ const hashk=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;retu
 function cover(w,cls){
   const c=w.cover||COVERS[w.aid]||'';
   return `<div class="b ${cls||''}"><div class="cv k${hashk(w.aid||w.title)}${c?' has':''}">
-    ${c?`<img src="${esc(c)}" alt="" loading="lazy"${c.startsWith('data:')?'':' crossorigin="anonymous"'}>`:''}<span class="tt">${esc(w.ko||w.title)}</span></div></div>`;
+    ${c?`<img src="${esc(c)}" alt="" loading="lazy" onerror="this.closest('.cv').classList.remove('has');this.remove()">`:''}<span class="tt">${esc(w.ko||w.title)}</span></div></div>`;
 }
 function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),3200);}
 const disp=w=>w.ko||w.title;
@@ -1833,8 +1833,9 @@ function viewReport(v){
       <div class="stats">
         <div><div class="v">${deep}</div><div class="k">수면 아래</div></div>
         <div><div class="v">${uni}</div><div class="k">나만 등록</div></div>
-        <div><div class="v">${p.x>=0?'충격':'위로'}</div><div class="k">기운 방향</div></div>
-        <div><div class="v">${top?pct(top.s)+'%':'—'}</div><div class="k">최고 일치</div></div></div></div>
+        <div><div class="v">${p.x>=0?'충격':'위로'}</div><div class="k">마음이 기운 쪽</div></div>
+        <div><div class="v"${top?'':' style="font-size:19px"'}>${top?pct(top.s)+'%':'아직 없음'}</div><div class="k">최고 일치</div></div>
+        <div><div class="v">${N}명</div><div class="k">집계 인원</div></div></div></div>
     <div class="bdgs">${badges(me).map(b=>`<div class="bdg${b.hot?' hot':''}"><div class="t">${esc(b.t)}</div><div class="d">${esc(b.d)}</div></div>`).join('')}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center">
       <button class="btn" id="png">카드 이미지 저장 · PNG</button>
