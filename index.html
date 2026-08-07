@@ -621,7 +621,7 @@ const ANCHOR_L='요츠바랑',ANCHOR_R='베르세르크';
 
 /* 화면에 떠 있는 판을 밝힙니다. 고쳤는데 안 바뀌어 보일 때 어느 파일이 떠 있는지
    바로 확인할 수 있습니다. 고칠 때마다 이 값을 올립니다. */
-const BUILD='08-04';
+const BUILD='08-06';
 const norm=s=>(s||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
 const D=DICT.map((r,i)=>({aid:'d:'+i,title:r[0],q:r[1],country:r[2],pop:r[3],mood:r[4],g:r[5]}));
 const DIX={};D.forEach(w=>DIX[w.aid]=w);
@@ -880,7 +880,9 @@ const disp=w=>w.ko||w.title;
 const P='취향 유전자 지도';
 const nameOf=m=>(m.slack?'@'+m.slack.replace(/^@/,''):m.name);
 const sl=(...l)=>l.filter(x=>x!==null&&x!==undefined).join('\n');
-const depthOf=aid=>{const y=yOf(aid);return y>=.55?'수면 위':y>=0?'얕은 물':y>=-.55?'중층':'심해';};
+/* 「중층」「얕은 물」은 제가 만든 말이라 뜻이 전달되지 않고, 인기등급 자체가 아직
+   추정값이라 숫자를 밝히지 않습니다. 지도에서 눈으로 보이는 두 구역만 씁니다. */
+const depthOf=aid=>yOf(aid)>=0?'수면 위':'수면 아래';
 const txtDefend=(t,aid)=>sl(`${nameOf(t)} 님께 *변론 요청*`,'',
   `*${disp(WORKS[aid])}* — 클럽 ${MEMBERS.length}명 중 이걸 올린 사람은 ${t.name} 님 혼자입니다.`,'',
   '> 왜 이걸 인생작 열 편에 넣었습니까? 세 줄만 부탁합니다.','',`${P} · ${depthOf(aid)}`);
@@ -1479,8 +1481,13 @@ function drawMap(host,opt){
      다시 배치합니다. 위치의 뜻은 그대로 두고 크기만 양보하므로 겹침이 반드시 사라집니다. */
   let TW,TH,CW,CH,xL,xR,yTop,yBot,sx,sy,nodes,shrink=1,hit=0;
   for(let attempt=0;attempt<4;attempt++){
-    TW=Math.round((MOB?58:42)*SC*shrink); TH=Math.round((MOB?87:63)*SC*shrink);
-    CW=TW+6; CH=TH+6;
+    TW=Math.round((MOB?66:50)*SC*shrink); TH=Math.round((MOB?99:75)*SC*shrink);
+    /* 표지가 조금 겹쳐도 괜찮습니다. 완전히 떼어놓으려면 좌표를 크게 왜곡해야 하는데,
+       지도의 뜻은 위치에 있으니 위치를 지키고 겹침을 허용합니다.
+       한 축으로 60% 이상 떨어지게만 해서 어느 작품인지 알아볼 수 있는 선은 지킵니다. */
+    /* 표지를 완전히 떼어놓으면 실제 좌표에서 멀어집니다. 살짝 겹치는 편이 위치가 정직합니다.
+       충돌 상자를 표지의 72% 로 잡아 최대 28% 정도만 겹치게 둡니다. */
+    CW=Math.round(TW*0.72); CH=Math.round(TH*0.72);
     yTop=TOPB+TH/2; yBot=H-BOT-TH/2; xL=PAD+TW/2; xR=W-PAD-TW/2;
     sx=v=>xL+(v+1)/2*(xR-xL);
     sy=v=>yBot-(v+1)/2*(yBot-yTop);
@@ -1509,7 +1516,9 @@ function drawMap(host,opt){
           if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5){dx=((i+j)%2?1:-1)*0.5;dy=0.5;}
           if((ox/CW)<(oy/CH)){const k=(dx>=0?1:-1)*ox*.34;A.x-=k;B.x+=k;}
           else{const k=(dy>=0?1:-1)*oy*.34;A.y-=k;B.y+=k;}}}
-      nodes.forEach(n=>{n.x+=(n.ax-n.x)*.055;n.y+=(n.ay-n.y)*.055;
+      /* 겹침을 허용했으므로 밀어낼 거리가 짧습니다. 원래 좌표로 더 세게 당겨
+         표지가 실제 자리에 가깝게 놓이도록 합니다. */
+      nodes.forEach(n=>{n.x+=(n.ax-n.x)*.12;n.y+=(n.ay-n.y)*.12;
         n.x=cl2(n.x,xL,xR);n.y=cl2(n.y,yTop,yBot);});}
     /* 2단계: 복원력 없이 겹침만 풀기. 흔들기를 패스 시작에 두어 항상 「풀기」로 끝냅니다. */
     hit=0;
@@ -1527,8 +1536,15 @@ function drawMap(host,opt){
         nodes.forEach(n=>{n.x=cl2(n.x,xL,xR);n.y=cl2(n.y,yTop,yBot);});
         if(!hit)break;}
       if(!hit)break;}
-    if(!hit)break;
-    shrink*=0.87;   /* 그래도 겹치면 표지를 줄여 다시 배치합니다 */
+    /* 겹침 자체는 허용하므로, 절반 가까이 가려지는 심한 경우에만 표지를 줄입니다.
+       작은 겹침까지 없애려다 표지가 불필요하게 작아지던 문제를 막습니다. */
+    let severe=0;
+    for(let i=0;i<nodes.length&&!severe;i++)for(let j=i+1;j<nodes.length;j++){
+      const A=nodes[i],B=nodes[j];
+      const ox=Math.max(0,TW-Math.abs(A.x-B.x)), oy=Math.max(0,TH-Math.abs(A.y-B.y));
+      if(ox*oy>TW*TH*0.40){severe++;break;}}
+    if(!severe)break;
+    shrink*=0.9;
   }
   const myId=ME?ME.id:null;
   const cx=sx(0),wl=sy(0);
@@ -1563,7 +1579,12 @@ function drawMap(host,opt){
     <text x="${W*0.71}" y="${TOPB-12}" fill="${q[3]?'var(--pink-ink)':'var(--ink-3)'}">${q[3]}편</text>
     <text x="${W*0.29}" y="${H-BOT+64}" fill="${q[0]?'var(--pink-ink)':'var(--ink-3)'}">${q[0]}편</text>
     <text x="${W*0.71}" y="${H-BOT+64}" fill="${q[1]?'var(--pink-ink)':'var(--ink-3)'}">${q[1]}편</text></g>
-  ${nodes.map(n=>{const w=WORKS[n.a]||{title:'?'},is=mine.has(n.a),st=state(n.a),s=sz(n.a);
+  ${nodes.slice().sort((p,q)=>{
+      /* 겹치면 나중에 그린 것이 위로 옵니다. 내 열 편과 등록자가 많은 작품을 위로 올립니다. */
+      const mp=mine.has(p.a)?1:0, mq=mine.has(q.a)?1:0;
+      if(mp!==mq)return mp-mq;
+      return ((IDF[p.a]||{n:0}).n)-((IDF[q.a]||{n:0}).n);
+    }).map(n=>{const w=WORKS[n.a]||{title:'?'},is=mine.has(n.a),st=state(n.a),s=sz(n.a);
     const tw=TW*s,th=TH*s,x=(n.x-tw/2).toFixed(1),y=(n.y-th/2).toFixed(1);
     const c=w.cover||COVERS[n.a]||'';
     const stroke=(is&&mixed)?'var(--pink-fill)':'var(--ink)';
@@ -1572,6 +1593,7 @@ function drawMap(host,opt){
     const op=st==='prov'?.62:1;
     return `<g class="wk" data-aid="${esc(n.a)}" tabindex="0" role="button" aria-label="${esc(disp(w))}"
       transform="translate(${x},${y})" opacity="${op}" style="cursor:pointer">
+      <rect x="-3" y="-3" width="${(tw+6).toFixed(1)}" height="${(th+6).toFixed(1)}" fill="var(--paper)"/>
       ${c?`<image href="${esc(c)}" width="${tw.toFixed(1)}" height="${th.toFixed(1)}" preserveAspectRatio="xMidYMid slice"/>`
         :`<rect width="${tw.toFixed(1)}" height="${th.toFixed(1)}" fill="var(--paper-3)"/>
           <text x="3" y="12" font-family="Gothic A1,sans-serif" font-size="8.5" font-weight="700" fill="var(--ink)">${esc(disp(w)).slice(0,16)}</text>`}
@@ -1602,8 +1624,8 @@ function drawMap(host,opt){
     const own=(OWNERS[aid]||[]).map(m=>m.name);
     panel.innerHTML=`<p class="ph">누른 작품</p><div class="pk"><div class="pc">${cover(w)}</div><div>
       <div class="pt">${esc(disp(w))}</div>
-      <div class="pm">${depthOf(aid)} · 인기 ${w.pop||'?'}급 · 클럽에서 ${(IDF[aid]||{n:0}).n}명 등록</div>
-      <div class="pm">마음 ${esc(ZP[Math.max(1,Math.min(5,Math.round(st.mean)))-1])}${st.n>1?` · ${st.n}명이 표시`:' · 한 명만 표시'}${s==='dis'?' · <b>이견 있음</b>':''}${s==='prov'?' · 잠정':''}</div>
+      <div class="pm">${depthOf(aid)} · 클럽에서 ${(IDF[aid]||{n:0}).n}명 등록</div>
+      <div class="pm">읽고 난 뒤 — ${esc(ZP[Math.max(1,Math.min(5,Math.round(st.mean)))-1])}${st.n>1?` (${st.n}명 평균)`:' (한 명만 표시)'}${s==='dis'?' · <b>이견 있음</b>':''}</div>
       <div class="pm">올린 사람 ${esc(own.join(', '))||'—'}</div></div></div>`;};
   const showM=mid=>{const m=MEMBERS.find(x=>x.id===mid);if(!m)return;
     const p2=memberXY(m),deep=m.works.filter(w=>yOf(w.aid)<0).length;
@@ -1640,8 +1662,7 @@ function mapLegend(o){
   if(o.members){it2.push('<span><i style="background:var(--pink-fill);border-radius:50%"></i>나</span>');
     if(o.others)it2.push('<span><i style="background:var(--blue);border-radius:50%"></i>다른 멤버 · 열 편의 무게중심</span>');}
   if(o.sizeVaries)it2.push('<span>표지가 클수록 클럽에서 많이 올린 작품</span>');
-  return `<div class="legend">${it.join('')}</div>`
-    +(it2.length?`<div class="legend" style="margin-top:6px">${it2.join('')}</div>`:'');
+  return `<div class="legend">${it.concat(it2).join('')}</div>`;
 }
 
 /* ══ 카드 이미지 · 공유 링크 ══ */
@@ -1863,7 +1884,7 @@ function viewReport(v){
       ${[...me.works].sort((a,b)=>yOf(a.aid)-yOf(b.aid)).map(w=>{const s=moodStat(w.aid),st=state(w.aid);
         return `<div class="entry"><div>${cover(w)}</div>
         <div><div class="hd"><div class="t">${esc(disp(w))}</div>
-          <div class="meta">${depthOf(w.aid)} · 인기 ${w.pop}급 · ${IDF[w.aid].n}명 등록</div></div>
+          <div class="meta">${depthOf(w.aid)} · ${IDF[w.aid].n}명 등록</div></div>
           <p class="bl" style="font-size:13.5px;color:var(--ink-2)">내가 표시한 마음 <b style="color:var(--ink)">${esc(ZP[w.mood-1])}</b>
             ${s.n>1?` · 클럽 평균 ${esc(ZP[Math.round(s.mean)-1])} (${s.n}명)`:' · 아직 나만 표시했습니다'}
             ${st==='dis'?' · <b style="color:var(--pink-ink)">이견 있음</b>':''}</p>
