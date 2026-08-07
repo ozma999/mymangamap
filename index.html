@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="cache-control" content="no-cache">
 <title>취향 유전자 지도 — 애독자 카드</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -371,7 +372,8 @@ svg .wk:focus-visible rect,svg .mb:focus-visible circle{stroke:var(--blue);strok
   <div class="head">
     <span><b>애독자 카드</b> · 취향 유전자 지도 · 만화 / 웹툰</span>
     <span class="mono">집계 인원 <span class="cnt num" id="hCnt">000</span> · 등록 작품 <span class="num" id="hWk">000</span>
-      &nbsp;·&nbsp; <span id="whoami"></span></span>
+      &nbsp;·&nbsp; <span id="whoami"></span>
+      &nbsp;·&nbsp; <span id="hBuild" title="이 화면에 떠 있는 판">판 —</span></span>
   </div>
   <header class="mast">
     <h1>취향 유전자<br>지도<span class="plate" aria-hidden="true">취향 유전자<br>지도</span></h1>
@@ -617,6 +619,9 @@ const ZL=['마음이<br>데워짐','조금<br>따뜻함','그 사이','조금<br
 const ZP=['마음이 데워짐','조금 따뜻함','그 사이','조금 아픔','마음이 부서짐'];
 const ANCHOR_L='요츠바랑',ANCHOR_R='베르세르크';
 
+/* 화면에 떠 있는 판을 밝힙니다. 고쳤는데 안 바뀌어 보일 때 어느 파일이 떠 있는지
+   바로 확인할 수 있습니다. 고칠 때마다 이 값을 올립니다. */
+const BUILD='08-04';
 const norm=s=>(s||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
 const D=DICT.map((r,i)=>({aid:'d:'+i,title:r[0],q:r[1],country:r[2],pop:r[3],mood:r[4],g:r[5]}));
 const DIX={};D.forEach(w=>DIX[w.aid]=w);
@@ -983,6 +988,7 @@ function render(){
   recompute();
   $('#hCnt').textContent=String(MEMBERS.length).padStart(3,'0');
   $('#hWk').textContent=String(Object.keys(WORKS).length).padStart(3,'0');
+  const hb=$('#hBuild');if(hb)hb.textContent='판 '+BUILD;
   renderWho();renderNav();const v=$('#view');
   if(TAB!=='submit'&&TAB!=='report'&&!ME){
     v.innerHTML=`<section class="sect"><p class="kicker">잠김</p><h2 class="lead">내 카드가 필요합니다</h2>
