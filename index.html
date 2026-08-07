@@ -243,6 +243,8 @@ input[type=text]:focus,textarea:focus,select:focus{outline:0;border-color:var(--
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));border-top:1.5px solid var(--ink)}
 .stats div{padding:13px 14px;border-right:1px solid var(--line-2)}.stats div:last-child{border-right:0}
 .stats .v{font-family:var(--mono);font-weight:600;font-size:24px;line-height:1}
+/* 한글 값은 모노에 글리프가 없어 대체 서체로 떨어집니다. 처음부터 고딕으로 짭니다. */
+.stats .v.kr{font-family:var(--display);font-weight:900;letter-spacing:-.01em}
 .stats .k{font-family:var(--mono);font-weight:600;font-size:10px;letter-spacing:.02em;color:var(--ink-2);margin-top:6px}
 .bdgs{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
 .bdg{border:1.5px solid var(--ink);padding:9px 13px;background:rgba(255,255,255,.45)}
@@ -621,7 +623,7 @@ const ANCHOR_L='요츠바랑',ANCHOR_R='베르세르크';
 
 /* 화면에 떠 있는 판을 밝힙니다. 고쳤는데 안 바뀌어 보일 때 어느 파일이 떠 있는지
    바로 확인할 수 있습니다. 고칠 때마다 이 값을 올립니다. */
-const BUILD='08-06';
+const BUILD='08-07';
 const norm=s=>(s||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
 const D=DICT.map((r,i)=>({aid:'d:'+i,title:r[0],q:r[1],country:r[2],pop:r[3],mood:r[4],g:r[5]}));
 const DIX={};D.forEach(w=>DIX[w.aid]=w);
@@ -1743,11 +1745,23 @@ async function drawCard(me,useImgs){
   const S=[[String(deep),'수면 아래'],[String(uni),'나만 등록'],
     [pp.x>=0?'충격':'위로','마음이 기운 쪽'],
     [top?pct(top.s)+'%':'아직 없음','최고 일치'],[String(N)+'명','집계 인원']];
+  /* 글자 수로 서체를 나누면 「충격」 같은 한글이 모노로 떨어져 시스템 폰트로 합성됩니다.
+     숫자는 고정폭, 한글은 고딕으로 성격에 따라 나누고, 「1명」처럼 섞인 값은 쪼개서 그립니다. */
+  const drawVal=(v,px,py)=>{
+    const m=/^([\d.]+)(.*)$/.exec(v);
+    if(m){
+      x.font='600 80px "IBM Plex Mono",monospace';x.fillText(m[1],px,py);
+      if(m[2]){const w1=x.measureText(m[1]).width, kr=/[가-힣]/.test(m[2]);
+        x.font=kr?'900 42px "Gothic A1",sans-serif':'600 48px "IBM Plex Mono",monospace';
+        x.fillText(m[2],px+w1+(kr?8:2),py);}
+    }else{
+      /* 한글은 글자가 네모를 꽉 채워 같은 크기라도 숫자보다 커 보입니다.
+         숫자 80px 과 시각적 무게를 맞추려면 한글은 조금 작아야 합니다. */
+      x.font='900 '+(v.length>=4?46:58)+'px "Gothic A1",sans-serif';
+      x.fillText(v,px,py);}};
   const sw=(W-M*2)/5;
   S.forEach(([vv,kk],i)=>{const sx2=M+i*sw;
-    x.fillStyle=INK;
-    x.font=(vv.length>3?'900 58px "Gothic A1",sans-serif':'600 80px "IBM Plex Mono",monospace');
-    x.fillText(vv,sx2+6,y+106);
+    x.fillStyle=INK;drawVal(String(vv),sx2+6,y+106);
     x.font='700 31px "Gothic A1",sans-serif';x.fillStyle=SOFT;x.fillText(kk,sx2+6,y+156);});
   y+=248;
 
@@ -1756,8 +1770,8 @@ async function drawCard(me,useImgs){
   x.fillStyle=INK;x.font='900 44px "Gothic A1",sans-serif';
   x.fillText('지도에서 내 자리',M+34,y+6);
   x.font='400 38px "Noto Serif KR",serif';x.fillStyle=SOFT;
-  x.fillText((pp.y>=0?'수면 위':'심해')+' 쪽 · '+(pp.x>=0?'충격':'위로')+' 쪽'
-    +(deep?'   수면 아래 '+deep+'편':''),M+34,y+52);
+  x.fillText('무게중심은 '+(pp.y>=0?'수면 위':'수면 아래')+' · 마음은 '+(pp.x>=0?'충격':'위로')+' 쪽'
+    +(deep?' · 수면 아래 작품 '+deep+'편':''),M+34,y+52);
   y+=152;
 
   /* 열 편 목록 */
@@ -1765,8 +1779,9 @@ async function drawCard(me,useImgs){
   x.fillText('인생작 열 편',M,y);
   y+=48;
   x.font='400 40px "Noto Serif KR",serif';x.fillStyle=INK;
-  wrapT(x,me.works.map(w=>disp(w)).join('  /  '),W-M*2).slice(0,3).forEach((l,i)=>x.fillText(l,M,y+i*54));
-  y+=3*54+18;
+  const LL=wrapT(x,me.works.map(w=>disp(w)).join(' · '),W-M*2).slice(0,3);
+  LL.forEach((l,i)=>x.fillText(l,M,y+i*54));
+  y+=LL.length*54+34;   /* 실제 줄 수만큼만 자리를 씁니다 */
 
   /* 배지 · 발행 정보 */
   const bd=badges(me).slice(0,4);
@@ -1782,8 +1797,15 @@ async function drawCard(me,useImgs){
   x.fillText('만화·웹툰 인생작 열 편으로 그리는 클럽 지도',M,FY);
   x.font='400 32px "IBM Plex Mono",monospace';
   x.textAlign='right';
-  let host='';try{host=location.host+location.pathname.replace(/\/index\.html$/,'');}catch(e){}
-  x.fillText(host||'취향 유전자 지도',W-M,FY);x.textAlign='left';
+  /* Vercel 미리보기 주소(이름-해시-팀.vercel.app)는 지나치게 길어 지면을 해칩니다.
+     정식 주소 꼴로 줄이고, 그래도 길면 글자를 줄여 맞춥니다. */
+  let host='';
+  try{host=location.hostname.replace(/^(.+?)-[a-z0-9]{6,}-.*\.vercel\.app$/i,'$1.vercel.app');}catch(e){}
+  host=host||'취향 유전자 지도';
+  let fs2=32;
+  x.font='400 '+fs2+'px "IBM Plex Mono",monospace';
+  while(x.measureText(host).width>W/2-M&&fs2>20){fs2-=2;x.font='400 '+fs2+'px "IBM Plex Mono",monospace';}
+  x.fillText(host,W-M,FY);x.textAlign='left';
 
   /* CORS 허용 헤더가 없으면 canvas 가 오염되어 toDataURL 이 예외를 던집니다.
      그때는 표지 없이 다시 그려 저장을 반드시 성공시킵니다. */
@@ -1860,8 +1882,8 @@ function viewReport(v){
       <div class="stats">
         <div><div class="v">${deep}</div><div class="k">수면 아래</div></div>
         <div><div class="v">${uni}</div><div class="k">나만 등록</div></div>
-        <div><div class="v">${p.x>=0?'충격':'위로'}</div><div class="k">마음이 기운 쪽</div></div>
-        <div><div class="v"${top?'':' style="font-size:19px"'}>${top?pct(top.s)+'%':'아직 없음'}</div><div class="k">최고 일치</div></div>
+        <div><div class="v kr">${p.x>=0?'충격':'위로'}</div><div class="k">마음이 기운 쪽</div></div>
+        <div><div class="v${top?'':' kr'}"${top?'':' style="font-size:20px"'}>${top?pct(top.s)+'%':'아직 없음'}</div><div class="k">최고 일치</div></div>
         <div><div class="v">${N}명</div><div class="k">집계 인원</div></div></div></div>
     <div class="bdgs">${badges(me).map(b=>`<div class="bdg${b.hot?' hot':''}"><div class="t">${esc(b.t)}</div><div class="d">${esc(b.d)}</div></div>`).join('')}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center">
